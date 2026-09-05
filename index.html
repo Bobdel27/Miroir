@@ -24,7 +24,11 @@
   .btn { padding: 10px 22px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; }
   .btn:hover { background: #0f3460; color: #fff; }
   .btn.green { background: #0f6e56; color: #fff; border-color: #1D9E75; }
+  .btn.red { background: #993c1d; color: #fff; border-color: #D85A30; }
+  .btn.purple { background: #533ab7; color: #fff; border-color: #7F77DD; }
   input[type=file] { display: none; }
+  #camSection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  #camStatus { font-size: 12px; color: #aaa; }
 </style>
 </head>
 <body>
@@ -44,8 +48,8 @@
 
 <div id="controls">
   <button class="effect active" data-fx="wave">🌊 Vague</button>
-  <button class="effect" data-fx="bulge">🫧 Bosse</button>
-  <button class="effect" data-fx="pinch">🔍 Pinceau</button>
+  <button class="effect" data-fx="lateral">↔️ Latéral</button>
+  <button class="effect" data-fx="zoom">🔭 Avant/Arrière</button>
   <button class="effect" data-fx="swirl">🌀 Tourbillon</button>
   <button class="effect" data-fx="fisheye">👁️ Fisheye</button>
   <button class="effect" data-fx="fun">🎭 Fun</button>
@@ -57,13 +61,18 @@
   <span id="strengthOut">50</span>
 </div>
 
+<div id="camSection">
+  <button class="btn purple" id="camBtn">📷 Activer caméra</button>
+  <button class="btn green" id="snapBtn" style="display:none">📸 Prendre photo</button>
+  <button class="btn red" id="stopBtn" style="display:none">⏹ Arrêter</button>
+  <span id="camStatus"></span>
+</div>
+
 <div id="actions">
   <label class="btn" for="fileIn">🖼️ Charger une image</label>
   <input type="file" id="fileIn" accept="image/*">
-
-  <label class="btn" for="camIn">📷 Prendre une photo</label>
+  <label class="btn" for="camIn">📱 Photo appareil (iOS/Chromebook)</label>
   <input type="file" id="camIn" accept="image/*" capture="user">
-
   <button class="btn green" id="saveBtn">💾 Enregistrer le résultat</button>
 </div>
 
@@ -77,24 +86,28 @@ let currentFx = 'wave';
 let strength = 50;
 let srcImg = null;
 let loopInterval = null;
+let stream = null;
+let video = null;
+let animId = null;
 
 document.querySelectorAll('.effect').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.effect').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     currentFx = b.dataset.fx;
-    if (srcImg) applyEffect();
+    if (srcImg || stream) applyEffect();
   });
 });
 
 document.getElementById('strength').addEventListener('input', e => {
   strength = +e.target.value;
   document.getElementById('strengthOut').textContent = strength;
-  if (srcImg) applyEffect();
+  if ((srcImg || stream) && !stream) applyEffect();
 });
 
 function loadFromFile(file) {
   if (!file) return;
+  stopCam();
   const img = new Image();
   img.onload = () => {
     srcImg = img;
@@ -109,6 +122,59 @@ function loadFromFile(file) {
 
 document.getElementById('fileIn').addEventListener('change', e => loadFromFile(e.target.files[0]));
 document.getElementById('camIn').addEventListener('change', e => loadFromFile(e.target.files[0]));
+
+// Caméra getUserMedia
+document.getElementById('camBtn').addEventListener('click', async () => {
+  clearInterval(loopInterval);
+  srcImg = null;
+  document.getElementById('camStatus').textContent = 'Connexion...';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: W, height: H, facingMode: 'user' } });
+    video = document.createElement('video');
+    video.srcObject = stream;
+    video.play();
+    video.onloadedmetadata = () => {
+      document.getElementById('camBtn').style.display = 'none';
+      document.getElementById('snapBtn').style.display = 'inline-block';
+      document.getElementById('stopBtn').style.display = 'inline-block';
+      document.getElementById('camStatus').textContent = '🟢 Caméra active';
+      camLoop();
+    };
+  } catch(err) {
+    document.getElementById('camStatus').textContent = '❌ Caméra non disponible (HTTPS requis sur PC)';
+  }
+});
+
+document.getElementById('snapBtn').addEventListener('click', () => {
+  // Figer l'image actuelle comme source
+  const frozen = sCtx.getImageData(0, 0, W, H);
+  stopCam();
+  sCtx.putImageData(frozen, 0, 0);
+  srcImg = srcC;
+  applyEffect();
+  loopInterval = setInterval(applyEffect, 50);
+  document.getElementById('camStatus').textContent = '📷 Photo prise';
+});
+
+document.getElementById('stopBtn').addEventListener('click', () => {
+  stopCam();
+  document.getElementById('camStatus').textContent = '';
+});
+
+function stopCam() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  document.getElementById('camBtn').style.display = 'inline-block';
+  document.getElementById('snapBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+}
+
+function camLoop() {
+  if (!stream) return;
+  sCtx.drawImage(video, 0, 0, W, H);
+  applyEffect();
+  animId = requestAnimationFrame(camLoop);
+}
 
 document.getElementById('saveBtn').addEventListener('click', () => {
   const link = document.createElement('a');
@@ -134,24 +200,35 @@ function applyEffect() {
       if (currentFx === 'wave') {
         sx = x + Math.sin((y / H) * Math.PI * 6 + t * 2) * s * 40;
         sy = y + Math.sin((x / W) * Math.PI * 6 + t * 2) * s * 30;
-      } else if (currentFx === 'bulge') {
-        const factor = r < 1 ? 1 / (1 - r * r * s * 0.9 + 0.01) : 1;
-        sx = cx + nx * cx * factor * (1 - s * 0.5);
-        sy = cy + ny * cy * factor * (1 - s * 0.5);
-      } else if (currentFx === 'pinch') {
-        const factor = r < 1 ? Math.sqrt(r) * (1 + s) : 1;
-        sx = cx + nx * cx * factor;
-        sy = cy + ny * cy * factor;
+
+      } else if (currentFx === 'lateral') {
+        // Déformation latérale : gauche-droite selon la hauteur
+        sx = x + Math.sin((y / H) * Math.PI * 2) * s * cx * 0.8;
+        sy = y;
+
+      } else if (currentFx === 'zoom') {
+        // Avant/arrière : zoom in haut, zoom out bas
+        const fy = (y / H - 0.5); // -0.5 en haut, +0.5 en bas
+        const zoom = 1 + fy * s * 2;
+        if (zoom > 0) {
+          sx = cx + (x - cx) / zoom;
+          sy = cy + (y - cy) / zoom;
+        } else {
+          sx = x; sy = y;
+        }
+
       } else if (currentFx === 'swirl') {
         const angle = r * s * Math.PI * 2;
         const cos = Math.cos(angle), sin = Math.sin(angle);
         sx = cx + (nx * cos - ny * sin) * cx;
         sy = cy + (nx * sin + ny * cos) * cy;
+
       } else if (currentFx === 'fisheye') {
         const theta = Math.atan2(ny, nx);
         const rn = r < 1 ? Math.pow(r, 1 + s * 1.5) : r;
         sx = cx + Math.cos(theta) * rn * cx;
         sy = cy + Math.sin(theta) * rn * cy;
+
       } else if (currentFx === 'fun') {
         sx = x + Math.sin(y * 0.1 + t) * s * 30;
         sy = y + Math.cos(x * 0.1 + t) * s * 30 * (y < H / 2 ? 1 : -1);
