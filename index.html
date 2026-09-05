@@ -6,22 +6,21 @@
 <title>Miroir Déformant</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; gap: 20px; }
+  body { font-family: sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; gap: 18px; }
   h1 { font-size: 22px; font-weight: 500; }
-  #canvases { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  #canvases { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
   .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .canvas-wrap label { font-size: 13px; color: #aaa; }
-  canvas { border-radius: 12px; border: 1px solid #333; display: block; max-width: 100%; }
+  canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 100%; max-width: 480px; height: auto; }
   #controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-  button.effect { padding: 8px 18px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
+  button.effect { padding: 9px 18px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
   button.effect:hover { background: #0f3460; color: #fff; }
   button.effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
   #sliderRow { display: flex; align-items: center; gap: 12px; }
   #sliderRow label { font-size: 13px; color: #aaa; }
-  input[type=range] { width: 160px; accent-color: #7F77DD; }
+  input[type=range] { width: 180px; accent-color: #7F77DD; }
   #strengthOut { font-size: 14px; font-weight: 500; min-width: 32px; }
-  #actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .btn { padding: 10px 22px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; }
+  .btn { padding: 10px 20px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; text-align: center; }
   .btn:hover { background: #0f3460; color: #fff; }
   .btn.green { background: #0f6e56; color: #fff; border-color: #1D9E75; }
   .btn.red { background: #993c1d; color: #fff; border-color: #D85A30; }
@@ -29,6 +28,7 @@
   input[type=file] { display: none; }
   #camSection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
   #camStatus { font-size: 12px; color: #aaa; }
+  #actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 </style>
 </head>
 <body>
@@ -38,18 +38,19 @@
 <div id="canvases">
   <div class="canvas-wrap">
     <label>Original</label>
-    <canvas id="src" width="320" height="240"></canvas>
+    <canvas id="src" width="480" height="360"></canvas>
   </div>
   <div class="canvas-wrap">
     <label>Miroir déformant</label>
-    <canvas id="dst" width="320" height="240"></canvas>
+    <canvas id="dst" width="480" height="360"></canvas>
   </div>
 </div>
 
 <div id="controls">
   <button class="effect active" data-fx="wave">🌊 Vague</button>
   <button class="effect" data-fx="lateral">↔️ Latéral</button>
-  <button class="effect" data-fx="zoom">🔭 Avant/Arrière</button>
+  <button class="effect" data-fx="bulge">🫧 Bosse</button>
+  <button class="effect" data-fx="funnel">🔻 Entonnoir</button>
   <button class="effect" data-fx="swirl">🌀 Tourbillon</button>
   <button class="effect" data-fx="fisheye">👁️ Fisheye</button>
   <button class="effect" data-fx="fun">🎭 Fun</button>
@@ -71,9 +72,9 @@
 <div id="actions">
   <label class="btn" for="fileIn">🖼️ Charger une image</label>
   <input type="file" id="fileIn" accept="image/*">
-  <label class="btn" for="camIn">📱 Photo appareil (iOS/Chromebook)</label>
-  <input type="file" id="camIn" accept="image/*" capture="user">
-  <button class="btn green" id="saveBtn">💾 Enregistrer le résultat</button>
+  <label class="btn" for="camInIOS">📱 Photo iOS / Chromebook</label>
+  <input type="file" id="camInIOS" accept="image/*" capture="user">
+  <button class="btn green" id="saveBtn">💾 Enregistrer</button>
 </div>
 
 <script>
@@ -81,7 +82,7 @@ const srcC = document.getElementById('src');
 const dstC = document.getElementById('dst');
 const sCtx = srcC.getContext('2d');
 const dCtx = dstC.getContext('2d');
-const W = 320, H = 240;
+const W = 480, H = 360;
 let currentFx = 'wave';
 let strength = 50;
 let srcImg = null;
@@ -95,14 +96,14 @@ document.querySelectorAll('.effect').forEach(b => {
     document.querySelectorAll('.effect').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     currentFx = b.dataset.fx;
-    if (srcImg || stream) applyEffect();
+    if (srcImg || stream) { if (!stream) applyEffect(); }
   });
 });
 
 document.getElementById('strength').addEventListener('input', e => {
   strength = +e.target.value;
   document.getElementById('strengthOut').textContent = strength;
-  if ((srcImg || stream) && !stream) applyEffect();
+  if (!stream && srcImg) applyEffect();
 });
 
 function loadFromFile(file) {
@@ -112,7 +113,10 @@ function loadFromFile(file) {
   img.onload = () => {
     srcImg = img;
     sCtx.clearRect(0, 0, W, H);
-    sCtx.drawImage(img, 0, 0, W, H);
+    // centrer/recadrer l'image
+    const scale = Math.max(W / img.width, H / img.height);
+    const sw = img.width * scale, sh = img.height * scale;
+    sCtx.drawImage(img, (W - sw) / 2, (H - sh) / 2, sw, sh);
     clearInterval(loopInterval);
     applyEffect();
     loopInterval = setInterval(applyEffect, 50);
@@ -121,7 +125,7 @@ function loadFromFile(file) {
 }
 
 document.getElementById('fileIn').addEventListener('change', e => loadFromFile(e.target.files[0]));
-document.getElementById('camIn').addEventListener('change', e => loadFromFile(e.target.files[0]));
+document.getElementById('camInIOS').addEventListener('change', e => loadFromFile(e.target.files[0]));
 
 // Caméra getUserMedia
 document.getElementById('camBtn').addEventListener('click', async () => {
@@ -132,6 +136,7 @@ document.getElementById('camBtn').addEventListener('click', async () => {
     stream = await navigator.mediaDevices.getUserMedia({ video: { width: W, height: H, facingMode: 'user' } });
     video = document.createElement('video');
     video.srcObject = stream;
+    video.setAttribute('playsinline', true);
     video.play();
     video.onloadedmetadata = () => {
       document.getElementById('camBtn').style.display = 'none';
@@ -141,12 +146,11 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       camLoop();
     };
   } catch(err) {
-    document.getElementById('camStatus').textContent = '❌ Caméra non disponible (HTTPS requis sur PC)';
+    document.getElementById('camStatus').textContent = '❌ Non disponible — utilise "Photo iOS / Chromebook"';
   }
 });
 
 document.getElementById('snapBtn').addEventListener('click', () => {
-  // Figer l'image actuelle comme source
   const frozen = sCtx.getImageData(0, 0, W, H);
   stopCam();
   sCtx.putImageData(frozen, 0, 0);
@@ -198,24 +202,25 @@ function applyEffect() {
       const r = Math.sqrt(nx * nx + ny * ny);
 
       if (currentFx === 'wave') {
-        sx = x + Math.sin((y / H) * Math.PI * 6 + t * 2) * s * 40;
-        sy = y + Math.sin((x / W) * Math.PI * 6 + t * 2) * s * 30;
+        sx = x + Math.sin((y / H) * Math.PI * 6 + t * 2) * s * 50;
+        sy = y + Math.sin((x / W) * Math.PI * 6 + t * 2) * s * 40;
 
       } else if (currentFx === 'lateral') {
-        // Déformation latérale : gauche-droite selon la hauteur
-        sx = x + Math.sin((y / H) * Math.PI * 2) * s * cx * 0.8;
+        sx = x + Math.sin((y / H) * Math.PI * 2) * s * cx * 0.85;
         sy = y;
 
-      } else if (currentFx === 'zoom') {
-        // Avant/arrière : zoom in haut, zoom out bas
-        const fy = (y / H - 0.5); // -0.5 en haut, +0.5 en bas
-        const zoom = 1 + fy * s * 2;
-        if (zoom > 0) {
-          sx = cx + (x - cx) / zoom;
-          sy = cy + (y - cy) / zoom;
-        } else {
-          sx = x; sy = y;
-        }
+      } else if (currentFx === 'bulge') {
+        const factor = r < 1 ? 1 / (1 - r * r * s * 0.9 + 0.01) : 1;
+        sx = cx + nx * cx * factor * (1 - s * 0.5);
+        sy = cy + ny * cy * factor * (1 - s * 0.5);
+
+      } else if (currentFx === 'funnel') {
+        // Entonnoir : rétrécissement horizontal qui augmente vers le bas
+        const fy = y / H; // 0 en haut, 1 en bas
+        const pinch = 1 - s * fy * 0.85;
+        const scale = pinch > 0.05 ? pinch : 0.05;
+        sx = cx + (x - cx) / scale;
+        sy = y;
 
       } else if (currentFx === 'swirl') {
         const angle = r * s * Math.PI * 2;
@@ -230,8 +235,8 @@ function applyEffect() {
         sy = cy + Math.sin(theta) * rn * cy;
 
       } else if (currentFx === 'fun') {
-        sx = x + Math.sin(y * 0.1 + t) * s * 30;
-        sy = y + Math.cos(x * 0.1 + t) * s * 30 * (y < H / 2 ? 1 : -1);
+        sx = x + Math.sin(y * 0.08 + t) * s * 40;
+        sy = y + Math.cos(x * 0.08 + t) * s * 40 * (y < H / 2 ? 1 : -1);
       }
 
       sx = Math.max(0, Math.min(W - 1, Math.round(sx)));
@@ -248,16 +253,16 @@ function applyEffect() {
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const ctx = c.getContext('2d');
-  const grd = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 150);
+  const grd = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 200);
   grd.addColorStop(0, '#7F77DD');
   grd.addColorStop(0.5, '#1D9E75');
   grd.addColorStop(1, '#D85A30');
   ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 64px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('😀', W/2 - 60, H/2);
-  ctx.fillText('🎭', W/2 + 60, H/2 - 20);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '16px sans-serif';
-  ctx.fillText('Chargez votre image →', W/2, H - 22);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 80px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('😀', W/2 - 80, H/2);
+  ctx.fillText('🎭', W/2 + 80, H/2 - 20);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '18px sans-serif';
+  ctx.fillText('Chargez votre image →', W/2, H - 28);
   sCtx.drawImage(c, 0, 0);
   srcImg = c;
   applyEffect();
