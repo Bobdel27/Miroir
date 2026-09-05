@@ -9,27 +9,30 @@
   body { font-family: sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; gap: 18px; }
   h1 { font-size: 22px; font-weight: 500; }
   #canvases { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-  .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
   .canvas-wrap label { font-size: 13px; color: #aaa; }
   canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 100%; max-width: 480px; height: auto; }
   #controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 960px; }
   button.effect { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
   button.effect:hover { background: #0f3460; color: #fff; }
   button.effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
-  #sliderRow { display: flex; align-items: center; gap: 12px; }
-  #sliderRow label { font-size: 13px; color: #aaa; }
-  input[type=range] { width: 180px; accent-color: #7F77DD; }
-  #strengthOut { font-size: 14px; font-weight: 500; min-width: 32px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .row label { font-size: 13px; color: #aaa; }
+  input[type=range] { width: 160px; accent-color: #7F77DD; }
+  .val { font-size: 14px; font-weight: 500; min-width: 32px; }
   .btn { padding: 9px 18px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; text-align: center; }
   .btn:hover { background: #0f3460; color: #fff; }
   .btn.green { background: #0f6e56; color: #fff; border-color: #1D9E75; }
   .btn.red { background: #993c1d; color: #fff; border-color: #D85A30; }
   .btn.purple { background: #533ab7; color: #fff; border-color: #7F77DD; }
+  .btn.orange { background: #7a4e00; color: #fff; border-color: #c97d00; }
+  .btn.rec { background: #8b0000; color: #fff; border-color: #ff4444; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
   input[type=file] { display: none; }
-  #camSection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
   #camStatus { font-size: 12px; color: #aaa; }
-  #actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  #catLabel { font-size: 11px; color: #666; width: 100%; text-align: center; margin-top: 4px; }
+  #fx2Select { padding: 7px 10px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; }
+  #combo-toggle { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; }
+  #combo-toggle.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
 </style>
 </head>
 <body>
@@ -41,7 +44,6 @@
 </div>
 
 <div id="controls">
-  <!-- Déformations -->
   <button class="effect active" data-fx="wave">🌊 Vague</button>
   <button class="effect" data-fx="lateral">↔️ Latéral</button>
   <button class="effect" data-fx="bulge">🫧 Bosse</button>
@@ -55,18 +57,15 @@
   <button class="effect" data-fx="vortex">🕳️ Vortex</button>
   <button class="effect" data-fx="radial">⭕ Radial</button>
   <button class="effect" data-fx="fun">🎭 Fun</button>
-  <!-- Miroirs -->
   <button class="effect" data-fx="mirror4">🔲 Miroir x4</button>
   <button class="effect" data-fx="mirror_diag">🔀 Diagonal</button>
   <button class="effect" data-fx="kaleidoscope">💠 Kaléidoscope</button>
-  <!-- Couleurs -->
   <button class="effect" data-fx="prism">🌈 Prisme</button>
   <button class="effect" data-fx="thermal">🌡️ Thermique</button>
   <button class="effect" data-fx="vintage">📷 Vintage</button>
   <button class="effect" data-fx="neon">✨ Néon</button>
   <button class="effect" data-fx="psychedelic">🎨 Psychédélique</button>
   <button class="effect" data-fx="negative">🔄 Négatif</button>
-  <!-- Fun -->
   <button class="effect" data-fx="glitch">⚡ Glitch</button>
   <button class="effect" data-fx="pixel">🟦 Pixelisé</button>
   <button class="effect" data-fx="mosaic">🧩 Mosaïque</button>
@@ -75,25 +74,55 @@
   <button class="effect" data-fx="ascii">🔤 ASCII</button>
 </div>
 
-<div id="sliderRow">
-  <label>Intensité</label>
-  <input type="range" id="strength" min="1" max="100" value="50">
-  <span id="strengthOut">50</span>
+<!-- Combo effets -->
+<div class="row">
+  <button id="combo-toggle">🔀 Combiner 2 effets</button>
+  <select id="fx2Select" style="display:none">
+    <option value="none">— 2e effet —</option>
+    <option value="wave">🌊 Vague</option>
+    <option value="lateral">↔️ Latéral</option>
+    <option value="bulge">🫧 Bosse</option>
+    <option value="funnel">🔻 Entonnoir</option>
+    <option value="swirl">🌀 Tourbillon</option>
+    <option value="fisheye">👁️ Fisheye</option>
+    <option value="spiral">🌪️ Spirale</option>
+    <option value="liquid">💧 Liquide</option>
+    <option value="prism">🌈 Prisme</option>
+    <option value="thermal">🌡️ Thermique</option>
+    <option value="neon">✨ Néon</option>
+    <option value="psychedelic">🎨 Psychédélique</option>
+    <option value="negative">🔄 Négatif</option>
+    <option value="glitch">⚡ Glitch</option>
+  </select>
 </div>
 
-<div id="camSection">
+<!-- Sliders -->
+<div class="row">
+  <label>Intensité</label>
+  <input type="range" id="strength" min="1" max="100" value="50">
+  <span class="val" id="strengthOut">50</span>
+  <label>Vitesse</label>
+  <input type="range" id="speed" min="1" max="200" value="100">
+  <span class="val" id="speedOut">1x</span>
+</div>
+
+<!-- Caméra -->
+<div class="row">
   <button class="btn purple" id="camBtn">📷 Activer caméra</button>
   <button class="btn green" id="snapBtn" style="display:none">📸 Prendre photo</button>
   <button class="btn red" id="stopBtn" style="display:none">⏹ Arrêter</button>
   <span id="camStatus"></span>
 </div>
 
-<div id="actions">
-  <label class="btn" for="fileIn">🖼️ Charger une image</label>
+<!-- Actions -->
+<div class="row">
+  <label class="btn" for="fileIn">🖼️ Charger image</label>
   <input type="file" id="fileIn" accept="image/*">
-  <label class="btn" for="camInIOS">📱 Photo iOS / Chromebook</label>
+  <label class="btn" for="camInIOS">📱 Photo iOS/Chromebook</label>
   <input type="file" id="camInIOS" accept="image/*" capture="user">
-  <button class="btn green" id="saveBtn">💾 Enregistrer</button>
+  <button class="btn green" id="saveBtn">💾 Enregistrer photo</button>
+  <button class="btn orange" id="fullBtn">⛶ Plein écran</button>
+  <button class="btn red" id="recBtn">⏺ Enregistrer vidéo</button>
 </div>
 
 <script>
@@ -103,16 +132,19 @@ const sCtx = srcC.getContext('2d');
 const dCtx = dstC.getContext('2d', { willReadFrequently: true });
 const W = 480, H = 360;
 let currentFx = 'wave';
+let currentFx2 = 'none';
+let comboOn = false;
 let strength = 50;
+let speedMult = 1;
 let srcImg = null;
 let loopInterval = null;
 let stream = null;
 let video = null;
 let animId = null;
-
-// Matrix state
-const matrixCols = Math.floor(W / 14);
-const matrixDrops = Array(matrixCols).fill(0);
+let mediaRecorder = null;
+let recChunks = [];
+let isRecording = false;
+const matrixDrops = Array(Math.floor(W/14)).fill(0);
 
 document.querySelectorAll('.effect').forEach(b => {
   b.addEventListener('click', () => {
@@ -123,10 +155,23 @@ document.querySelectorAll('.effect').forEach(b => {
   });
 });
 
+document.getElementById('combo-toggle').addEventListener('click', () => {
+  comboOn = !comboOn;
+  document.getElementById('combo-toggle').classList.toggle('active', comboOn);
+  document.getElementById('fx2Select').style.display = comboOn ? 'inline-block' : 'none';
+});
+
+document.getElementById('fx2Select').addEventListener('change', e => { currentFx2 = e.target.value; });
+
 document.getElementById('strength').addEventListener('input', e => {
   strength = +e.target.value;
   document.getElementById('strengthOut').textContent = strength;
   if (!stream && srcImg) applyEffect();
+});
+
+document.getElementById('speed').addEventListener('input', e => {
+  speedMult = +e.target.value / 100;
+  document.getElementById('speedOut').textContent = speedMult.toFixed(1) + 'x';
 });
 
 function loadFromFile(file) {
@@ -135,10 +180,10 @@ function loadFromFile(file) {
   const img = new Image();
   img.onload = () => {
     srcImg = img;
-    sCtx.clearRect(0, 0, W, H);
-    const scale = Math.max(W / img.width, H / img.height);
-    const sw = img.width * scale, sh = img.height * scale;
-    sCtx.drawImage(img, (W - sw) / 2, (H - sh) / 2, sw, sh);
+    sCtx.clearRect(0,0,W,H);
+    const scale = Math.max(W/img.width, H/img.height);
+    const sw = img.width*scale, sh = img.height*scale;
+    sCtx.drawImage(img,(W-sw)/2,(H-sh)/2,sw,sh);
     clearInterval(loopInterval);
     applyEffect();
     loopInterval = setInterval(applyEffect, 50);
@@ -150,8 +195,7 @@ document.getElementById('fileIn').addEventListener('change', e => loadFromFile(e
 document.getElementById('camInIOS').addEventListener('change', e => loadFromFile(e.target.files[0]));
 
 document.getElementById('camBtn').addEventListener('click', async () => {
-  clearInterval(loopInterval);
-  srcImg = null;
+  clearInterval(loopInterval); srcImg = null;
   document.getElementById('camStatus').textContent = 'Connexion...';
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { width: W, height: H, facingMode: 'user' } });
@@ -166,389 +210,263 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('camStatus').textContent = '🟢 Caméra active';
       camLoop();
     };
-  } catch(err) {
-    document.getElementById('camStatus').textContent = '❌ Non disponible — utilise "Photo iOS / Chromebook"';
+  } catch(e) {
+    document.getElementById('camStatus').textContent = '❌ Non disponible — utilise Photo iOS/Chromebook';
   }
 });
 
 document.getElementById('snapBtn').addEventListener('click', () => {
-  const frozen = sCtx.getImageData(0, 0, W, H);
+  const frozen = sCtx.getImageData(0,0,W,H);
   stopCam();
-  sCtx.putImageData(frozen, 0, 0);
+  sCtx.putImageData(frozen,0,0);
   srcImg = srcC;
   applyEffect();
-  loopInterval = setInterval(applyEffect, 50);
+  loopInterval = setInterval(applyEffect,50);
   document.getElementById('camStatus').textContent = '📷 Photo prise';
 });
 
-document.getElementById('stopBtn').addEventListener('click', () => { stopCam(); document.getElementById('camStatus').textContent = ''; });
+document.getElementById('stopBtn').addEventListener('click', () => { stopCam(); document.getElementById('camStatus').textContent=''; });
 
 function stopCam() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  if (animId) { cancelAnimationFrame(animId); animId = null; }
-  document.getElementById('camBtn').style.display = 'inline-block';
-  document.getElementById('snapBtn').style.display = 'none';
-  document.getElementById('stopBtn').style.display = 'none';
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if (animId) { cancelAnimationFrame(animId); animId=null; }
+  document.getElementById('camBtn').style.display='inline-block';
+  document.getElementById('snapBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='none';
 }
 
 function camLoop() {
   if (!stream) return;
-  sCtx.drawImage(video, 0, 0, W, H);
+  sCtx.drawImage(video,0,0,W,H);
   applyEffect();
   animId = requestAnimationFrame(camLoop);
 }
 
+// Plein écran
+document.getElementById('fullBtn').addEventListener('click', () => {
+  const el = dstC;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+});
+
+// Enregistrement vidéo
+document.getElementById('recBtn').addEventListener('click', () => {
+  if (!isRecording) {
+    recChunks = [];
+    const stream2 = dstC.captureStream(30);
+    mediaRecorder = new MediaRecorder(stream2, { mimeType: 'video/webm' });
+    mediaRecorder.ondataavailable = e => { if (e.data.size>0) recChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'miroir_deformant.webm'; a.click();
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    document.getElementById('recBtn').textContent = '⏹ Arrêter vidéo';
+    document.getElementById('recBtn').classList.add('rec');
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    document.getElementById('recBtn').textContent = '⏺ Enregistrer vidéo';
+    document.getElementById('recBtn').classList.remove('rec');
+  }
+});
+
+// Photo
 document.getElementById('saveBtn').addEventListener('click', () => {
   const link = document.createElement('a');
-  link.download = 'miroir_deformant.png';
-  link.href = dstC.toDataURL('image/png');
+  link.download='miroir_deformant.png';
+  link.href=dstC.toDataURL('image/png');
   link.click();
 });
 
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r,g,b), min = Math.min(r,g,b);
-  let h, s, l = (max+min)/2;
-  if (max === min) { h = s = 0; }
-  else {
-    const d = max - min;
-    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
-    switch(max) {
-      case r: h = ((g-b)/d + (g<b?6:0))/6; break;
-      case g: h = ((b-r)/d + 2)/6; break;
-      case b: h = ((r-g)/d + 4)/6; break;
-    }
-  }
-  return [h, s, l];
+function rgbToHsl(r,g,b) {
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}
+  else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}
+  return[h,s,l];
+}
+function hslToRgb(h,s,l) {
+  let r,g,b;
+  if(s===0){r=g=b=l;}
+  else{const q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
+    const f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+    r=f(p,q,h+1/3);g=f(p,q,h);b=f(p,q,h-1/3);}
+  return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
 }
 
-function hslToRgb(h, s, l) {
-  let r, g, b;
-  if (s === 0) { r = g = b = l; }
-  else {
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1; if (t > 1) t -= 1;
-      if (t < 1/6) return p+(q-p)*6*t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p+(q-p)*(2/3-t)*6;
-      return p;
-    };
-    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
-    const p = 2*l-q;
-    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+function applyFxCanvas(fx, s, t, cx, cy) {
+  if (fx==='mirror4') {
+    const hw=W/2,hh=H/2;
+    dCtx.clearRect(0,0,W,H);
+    dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);
+    dCtx.save();dCtx.translate(W,0);dCtx.scale(-1,1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();
+    dCtx.save();dCtx.translate(0,H);dCtx.scale(1,-1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();
+    dCtx.save();dCtx.translate(W,H);dCtx.scale(-1,-1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();
+    return true;
   }
-  return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+  if (fx==='mirror_diag') {
+    dCtx.clearRect(0,0,W,H);
+    dCtx.drawImage(srcC,0,0,W,H);
+    dCtx.save();dCtx.beginPath();dCtx.moveTo(0,0);dCtx.lineTo(W,H);dCtx.lineTo(W,0);dCtx.closePath();dCtx.clip();
+    dCtx.translate(W,0);dCtx.scale(-1,1);dCtx.drawImage(srcC,0,0,W,H);dCtx.restore();
+    return true;
+  }
+  if (fx==='kaleidoscope') {
+    const segments=Math.max(4,Math.round(s*12)+4),angle=(Math.PI*2)/segments;
+    dCtx.clearRect(0,0,W,H);dCtx.save();dCtx.translate(cx,cy);
+    for(let i=0;i<segments;i++){dCtx.save();dCtx.rotate(angle*i);dCtx.beginPath();dCtx.moveTo(0,0);dCtx.arc(0,0,Math.max(W,H),0,angle);dCtx.closePath();dCtx.clip();
+      if(i%2===0){dCtx.drawImage(srcC,-cx,-cy,W,H);}else{dCtx.scale(-1,1);dCtx.rotate(-angle);dCtx.drawImage(srcC,-cx,-cy,W,H);}dCtx.restore();}
+    dCtx.restore();return true;
+  }
+  if (fx==='pixel') {
+    const bs=Math.round(s*30)+4;dCtx.clearRect(0,0,W,H);
+    for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=sCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;dCtx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;dCtx.fillRect(x,y,bs,bs);}
+    return true;
+  }
+  if (fx==='matrix') {
+    dCtx.fillStyle='rgba(0,0,0,0.05)';dCtx.fillRect(0,0,W,H);dCtx.fillStyle='#0f0';dCtx.font='14px monospace';
+    const ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
+    for(let i=0;i<matrixDrops.length;i++){dCtx.fillText(ch[Math.floor(Math.random()*ch.length)],i*14,matrixDrops[i]*14);if(matrixDrops[i]*14>H&&Math.random()>0.975)matrixDrops[i]=0;matrixDrops[i]+=s*0.5+0.3;}
+    return true;
+  }
+  if (fx==='glitch') {
+    dCtx.drawImage(srcC,0,0);const n=Math.round(s*18)+3;
+    for(let i=0;i<n;i++){const gy=Math.random()*H,gh=Math.random()*20+2,gx=(Math.random()-0.5)*s*80;
+      if(Math.random()<0.5){dCtx.drawImage(srcC,0,gy,W,gh,gx,gy,W,gh);}
+      else{const tmp=sCtx.getImageData(0,gy,W,gh),out=dCtx.createImageData(W,gh);for(let p=0;p<tmp.data.length;p+=4){out.data[p]=tmp.data[p];out.data[p+2]=tmp.data[p+2];out.data[p+3]=tmp.data[p+3];}dCtx.putImageData(out,gx,gy);}}
+    return true;
+  }
+  if (fx==='mosaic') {
+    const ts=Math.round(s*20)+8;dCtx.clearRect(0,0,W,H);
+    for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=Math.round((Math.random()-0.5)*s*40),oy=Math.round((Math.random()-0.5)*s*40);dCtx.drawImage(srcC,x,y,ts,ts,x+ox,y+oy,ts,ts);}
+    return true;
+  }
+  if (fx==='explode') {
+    const cols=8,rows=6,tw=W/cols,th=H/rows;dCtx.clearRect(0,0,W,H);
+    for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){const a=Math.atan2(row-rows/2,col-cols/2),d=s*30;dCtx.drawImage(srcC,col*tw,row*th,tw,th,col*tw+Math.cos(a)*d,row*th+Math.sin(a)*d,tw,th);}
+    return true;
+  }
+  if (fx==='ascii') {
+    const ch2=' .:-=+*#%@',fs=Math.max(6,Math.round(16-s*10));dCtx.fillStyle='#000';dCtx.fillRect(0,0,W,H);dCtx.font=`${fs}px monospace`;
+    for(let y=0;y<H;y+=fs)for(let x=0;x<W;x+=fs*0.6){const d=sCtx.getImageData(x|0,y|0,1,1).data,b=(d[0]*0.299+d[1]*0.587+d[2]*0.114)/255;dCtx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;dCtx.fillText(ch2[Math.floor(b*(ch2.length-1))],x,y+fs);}
+    return true;
+  }
+  return false;
+}
+
+function applyPixelFx(fx, sd, dd, x, y, sx, sy, s, t, cx, cy) {
+  sx = Math.max(0,Math.min(W-1,Math.round(sx)));
+  sy = Math.max(0,Math.min(H-1,Math.round(sy)));
+  const si=(sy*W+sx)*4, di=(y*W+x)*4;
+  if (fx==='thermal') {
+    const bright=(sd[si]*0.299+sd[si+1]*0.587+sd[si+2]*0.114)/255;
+    const [tr,tg,tb]=hslToRgb((1-bright)*0.67,1,0.5);
+    dd[di]=tr;dd[di+1]=tg;dd[di+2]=tb;dd[di+3]=255;
+  } else if (fx==='vintage') {
+    const rv=sd[si]*0.393+sd[si+1]*0.769+sd[si+2]*0.189;
+    const gv=sd[si]*0.349+sd[si+1]*0.686+sd[si+2]*0.168;
+    const bv=sd[si]*0.272+sd[si+1]*0.534+sd[si+2]*0.131;
+    const mix=1-s*0.5;
+    dd[di]=Math.min(255,rv*(1-mix)+sd[si]*mix);dd[di+1]=Math.min(255,gv*(1-mix)+sd[si+1]*mix);dd[di+2]=Math.min(255,bv*(1-mix)+sd[si+2]*mix);dd[di+3]=255;
+  } else if (fx==='neon') {
+    const lum=(sd[si]+sd[si+1]+sd[si+2])/3,edge=(lum>80&&lum<200)?1:0;
+    const [nr,ng,nb]=hslToRgb((t*50%360)/360,1,0.5);
+    dd[di]=edge?nr:sd[si]*0.2;dd[di+1]=edge?ng:sd[si+1]*0.2;dd[di+2]=edge?nb:sd[si+2]*0.2;dd[di+3]=255;
+  } else if (fx==='psychedelic') {
+    const [h3,sat,l3]=rgbToHsl(sd[si],sd[si+1],sd[si+2]);
+    const [pr,pg,pb]=hslToRgb((h3+t*0.1*s+0.5)%1,Math.min(1,sat+s*0.5),l3);
+    dd[di]=pr;dd[di+1]=pg;dd[di+2]=pb;dd[di+3]=255;
+  } else if (fx==='negative') {
+    const pulse=(Math.sin(t*3)+1)/2*s;
+    dd[di]=sd[si]+(255-2*sd[si])*pulse;dd[di+1]=sd[si+1]+(255-2*sd[si+1])*pulse;dd[di+2]=sd[si+2]+(255-2*sd[si+2])*pulse;dd[di+3]=255;
+  } else if (fx==='prism') {
+    const shift=Math.round(s*30);
+    const lx=Math.max(0,Math.min(W-1,sx-shift)),rx=Math.max(0,Math.min(W-1,sx+shift));
+    dd[di]=sd[(sy*W+lx)*4];dd[di+1]=sd[si+1];dd[di+2]=sd[(sy*W+rx)*4+2];dd[di+3]=255;
+  } else {
+    dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=sd[si+3];
+  }
+}
+
+function computeWarp(fx, x, y, s, t, cx, cy) {
+  let sx=x,sy=y;
+  const nx=(x-cx)/cx,ny=(y-cy)/cy,r=Math.sqrt(nx*nx+ny*ny);
+  if(fx==='wave'){sx=x+Math.sin((y/H)*Math.PI*6+t*2)*s*50;sy=y+Math.sin((x/W)*Math.PI*6+t*2)*s*40;}
+  else if(fx==='lateral'){sx=x+Math.sin((y/H)*Math.PI*2)*s*cx*0.85;}
+  else if(fx==='bulge'){const f=r<1?1/(1-r*r*s*0.9+0.01):1;sx=cx+nx*cx*f*(1-s*0.5);sy=cy+ny*cy*f*(1-s*0.5);}
+  else if(fx==='funnel'){const sc=Math.max(0.05,1-s*(y/H)*0.85);sx=cx+(x-cx)/sc;}
+  else if(fx==='swirl'){const a=r*s*Math.PI*2;sx=cx+(nx*Math.cos(a)-ny*Math.sin(a))*cx;sy=cy+(nx*Math.sin(a)+ny*Math.cos(a))*cy;}
+  else if(fx==='fisheye'){const th=Math.atan2(ny,nx),rn=r<1?Math.pow(r,1+s*1.5):r;sx=cx+Math.cos(th)*rn*cx;sy=cy+Math.sin(th)*rn*cy;}
+  else if(fx==='spiral'){const a2=r*s*Math.PI*3+t,pull=1-s*0.5*r;sx=cx+(nx*Math.cos(a2)-ny*Math.sin(a2))*cx*pull;sy=cy+(nx*Math.sin(a2)+ny*Math.cos(a2))*cy*pull;}
+  else if(fx==='liquid'){sx=x+Math.sin(y*0.05+t*1.5)*s*30+Math.sin(y*0.12+t)*s*15;sy=y+Math.cos(x*0.05+t*1.2)*s*30+Math.cos(x*0.12+t*0.8)*s*15;}
+  else if(fx==='shake'){sx=x+Math.sin(t*20+y*0.1)*s*20+(Math.random()-0.5)*s*8;sy=y+Math.cos(t*17+x*0.1)*s*15+(Math.random()-0.5)*s*8;}
+  else if(fx==='zoom_pulse'){const p=1+Math.sin(t*3)*s*0.5;sx=cx+(x-cx)/p;sy=cy+(y-cy)/p;}
+  else if(fx==='vortex'){const pull=Math.max(0,1-r*s*1.2),a3=pull*Math.PI*2;sx=cx+(nx*Math.cos(a3)-ny*Math.sin(a3))*cx;sy=cy+(nx*Math.sin(a3)+ny*Math.cos(a3))*cy;}
+  else if(fx==='radial'){const w2=Math.sin(r*10-t*3)*s*20,th2=Math.atan2(ny,nx);sx=x+Math.cos(th2)*w2;sy=y+Math.sin(th2)*w2;}
+  else if(fx==='fun'){sx=x+Math.sin(y*0.08+t)*s*40;sy=y+Math.cos(x*0.08+t)*s*40*(y<H/2?1:-1);}
+  return[sx,sy];
 }
 
 function applyEffect() {
-  const s = strength / 100;
-  const t = performance.now() / 1000;
-  const cx = W / 2, cy = H / 2;
+  const s = strength/100;
+  const t = (performance.now()/1000)*speedMult;
+  const cx=W/2,cy=H/2;
 
-  // --- Effets canvas directs ---
-
-  if (currentFx === 'mirror4') {
-    const hw = W/2, hh = H/2;
-    dCtx.clearRect(0,0,W,H);
-    dCtx.drawImage(srcC, 0,0,hw,hh, 0,0,hw,hh);
-    dCtx.save(); dCtx.translate(W,0); dCtx.scale(-1,1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
-    dCtx.save(); dCtx.translate(0,H); dCtx.scale(1,-1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
-    dCtx.save(); dCtx.translate(W,H); dCtx.scale(-1,-1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
-    return;
+  // Fx1 canvas-direct
+  if (!comboOn || currentFx2==='none') {
+    if (applyFxCanvas(currentFx,s,t,cx,cy)) return;
   }
 
-  if (currentFx === 'mirror_diag') {
-    dCtx.clearRect(0,0,W,H);
-    dCtx.save();
-    dCtx.transform(1,0,0,1,0,0);
-    // Moitié haute normale
-    dCtx.drawImage(srcC,0,0,W,H);
-    // Moitié basse = reflet diagonal
-    dCtx.save();
-    dCtx.translate(W,0); dCtx.transform(-1,0,0,1,0,0);
-    dCtx.drawImage(srcC,0,0,W,H);
-    dCtx.restore();
-    dCtx.restore();
-    // Overlay diagonal flip
-    dCtx.save();
-    dCtx.beginPath(); dCtx.moveTo(0,0); dCtx.lineTo(W,H); dCtx.lineTo(W,0); dCtx.closePath(); dCtx.clip();
-    dCtx.translate(W,0); dCtx.scale(-1,1);
-    dCtx.drawImage(srcC,0,0,W,H);
-    dCtx.restore();
-    return;
-  }
-
-  if (currentFx === 'kaleidoscope') {
-    const segments = Math.max(4, Math.round(s * 12) + 4);
-    const angle = (Math.PI * 2) / segments;
-    dCtx.clearRect(0,0,W,H);
-    dCtx.save(); dCtx.translate(cx,cy);
-    for (let i = 0; i < segments; i++) {
-      dCtx.save(); dCtx.rotate(angle*i);
-      dCtx.beginPath(); dCtx.moveTo(0,0); dCtx.arc(0,0,Math.max(W,H),0,angle); dCtx.closePath(); dCtx.clip();
-      if (i % 2 === 0) { dCtx.drawImage(srcC,-cx,-cy,W,H); }
-      else { dCtx.scale(-1,1); dCtx.rotate(-angle); dCtx.drawImage(srcC,-cx,-cy,W,H); }
-      dCtx.restore();
-    }
-    dCtx.restore();
-    return;
-  }
-
-  if (currentFx === 'pixel') {
-    const blockSize = Math.round(s * 30) + 4;
-    dCtx.clearRect(0,0,W,H);
-    for (let y = 0; y < H; y += blockSize) {
-      for (let x = 0; x < W; x += blockSize) {
-        const d = sCtx.getImageData(x+blockSize/2|0, y+blockSize/2|0, 1, 1).data;
-        dCtx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
-        dCtx.fillRect(x,y,blockSize,blockSize);
-      }
-    }
-    return;
-  }
-
-  if (currentFx === 'matrix') {
-    dCtx.fillStyle = 'rgba(0,0,0,0.05)';
-    dCtx.fillRect(0,0,W,H);
-    dCtx.fillStyle = '#0f0';
-    dCtx.font = '14px monospace';
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
-    for (let i = 0; i < matrixDrops.length; i++) {
-      const ch = chars[Math.floor(Math.random()*chars.length)];
-      dCtx.fillText(ch, i*14, matrixDrops[i]*14);
-      if (matrixDrops[i]*14 > H && Math.random() > 0.975) matrixDrops[i] = 0;
-      matrixDrops[i] += s * 0.5 + 0.3;
-    }
-    return;
-  }
-
-  if (currentFx === 'glitch') {
-    dCtx.drawImage(srcC,0,0);
-    const numSlices = Math.round(s*18)+3;
-    for (let i = 0; i < numSlices; i++) {
-      const gy = Math.random()*H;
-      const gh = Math.random()*20+2;
-      const gx = (Math.random()-0.5)*s*80;
-      if (Math.random() < 0.5) {
-        dCtx.drawImage(srcC, 0,gy,W,gh, gx,gy,W,gh);
-      } else {
-        const tmp = sCtx.getImageData(0,gy,W,gh);
-        const out = dCtx.createImageData(W,gh);
-        for (let p = 0; p < tmp.data.length; p+=4) {
-          out.data[p]   = tmp.data[p];
-          out.data[p+1] = 0;
-          out.data[p+2] = tmp.data[p+2];
-          out.data[p+3] = tmp.data[p+3];
-        }
-        dCtx.putImageData(out, gx, gy);
-      }
-    }
-    return;
-  }
-
-  if (currentFx === 'mosaic') {
-    const tileSize = Math.round(s*20)+8;
-    dCtx.clearRect(0,0,W,H);
-    for (let y = 0; y < H; y += tileSize) {
-      for (let x = 0; x < W; x += tileSize) {
-        const ox = Math.round((Math.random()-0.5)*s*40);
-        const oy = Math.round((Math.random()-0.5)*s*40);
-        dCtx.drawImage(srcC, x,y,tileSize,tileSize, x+ox,y+oy,tileSize,tileSize);
-      }
-    }
-    return;
-  }
-
-  if (currentFx === 'explode') {
-    dCtx.clearRect(0,0,W,H);
-    const cols = 8, rows = 6;
-    const tw = W/cols, th = H/rows;
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const dx = (col - cols/2) * s * 20;
-        const dy = (row - rows/2) * s * 20;
-        const angle = Math.atan2(row-rows/2, col-cols/2);
-        const dist = s * 30;
-        dCtx.drawImage(srcC, col*tw, row*th, tw, th,
-          col*tw + Math.cos(angle)*dist, row*th + Math.sin(angle)*dist, tw, th);
-      }
-    }
-    return;
-  }
-
-  if (currentFx === 'ascii') {
-    const chars2 = ' .:-=+*#%@';
-    const fs = Math.max(6, Math.round(16 - s*10));
-    dCtx.fillStyle = '#000'; dCtx.fillRect(0,0,W,H);
-    dCtx.font = `${fs}px monospace`;
-    for (let y = 0; y < H; y += fs) {
-      for (let x = 0; x < W; x += fs*0.6) {
-        const d = sCtx.getImageData(x|0, y|0, 1, 1).data;
-        const bright = (d[0]*0.299 + d[1]*0.587 + d[2]*0.114) / 255;
-        const ch = chars2[Math.floor(bright*(chars2.length-1))];
-        dCtx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
-        dCtx.fillText(ch, x, y+fs);
-      }
-    }
-    return;
-  }
-
-  // --- Effets pixel par pixel ---
-  const src = sCtx.getImageData(0,0,W,H);
+  // Pixel pipeline
+  const srcData = sCtx.getImageData(0,0,W,H);
   const dst = dCtx.createImageData(W,H);
-  const sd = src.data, dd = dst.data;
+  const sd=srcData.data, dd=dst.data;
 
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      let sx = x, sy = y;
-      const nx = (x-cx)/cx, ny = (y-cy)/cy;
-      const r = Math.sqrt(nx*nx+ny*ny);
-      const di = (y*W+x)*4;
+  // Intermédiaire pour combo
+  let midData = null;
+  if (comboOn && currentFx2!=='none') {
+    // Appliquer fx1 dans un canvas temporaire
+    const tmpC = document.createElement('canvas'); tmpC.width=W; tmpC.height=H;
+    const tmpCtx = tmpC.getContext('2d');
+    const mid = tmpCtx.createImageData(W,H);
+    const mdd=mid.data;
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      let[sx,sy]=computeWarp(currentFx,x,y,s,t,cx,cy);
+      applyPixelFx(currentFx,sd,mdd,x,y,sx,sy,s,t,cx,cy);
+    }
+    tmpCtx.putImageData(mid,0,0);
+    midData = tmpCtx.getImageData(0,0,W,H);
+  }
 
-      if (currentFx === 'wave') {
-        sx = x + Math.sin((y/H)*Math.PI*6+t*2)*s*50;
-        sy = y + Math.sin((x/W)*Math.PI*6+t*2)*s*40;
+  const source = midData ? midData.data : sd;
 
-      } else if (currentFx === 'lateral') {
-        sx = x + Math.sin((y/H)*Math.PI*2)*s*cx*0.85;
-        sy = y;
-
-      } else if (currentFx === 'bulge') {
-        const factor = r<1 ? 1/(1-r*r*s*0.9+0.01) : 1;
-        sx = cx+nx*cx*factor*(1-s*0.5);
-        sy = cy+ny*cy*factor*(1-s*0.5);
-
-      } else if (currentFx === 'funnel') {
-        const fy = y/H;
-        const sc = Math.max(0.05, 1-s*fy*0.85);
-        sx = cx+(x-cx)/sc; sy = y;
-
-      } else if (currentFx === 'swirl') {
-        const angle = r*s*Math.PI*2;
-        const cos = Math.cos(angle), sin = Math.sin(angle);
-        sx = cx+(nx*cos-ny*sin)*cx;
-        sy = cy+(nx*sin+ny*cos)*cy;
-
-      } else if (currentFx === 'fisheye') {
-        const theta = Math.atan2(ny,nx);
-        const rn = r<1 ? Math.pow(r,1+s*1.5) : r;
-        sx = cx+Math.cos(theta)*rn*cx;
-        sy = cy+Math.sin(theta)*rn*cy;
-
-      } else if (currentFx === 'spiral') {
-        const angle2 = r*s*Math.PI*3+t;
-        const pull = 1-s*0.5*r;
-        sx = cx+(nx*Math.cos(angle2)-ny*Math.sin(angle2))*cx*pull;
-        sy = cy+(nx*Math.sin(angle2)+ny*Math.cos(angle2))*cy*pull;
-
-      } else if (currentFx === 'liquid') {
-        sx = x+Math.sin(y*0.05+t*1.5)*s*30+Math.sin(y*0.12+t)*s*15;
-        sy = y+Math.cos(x*0.05+t*1.2)*s*30+Math.cos(x*0.12+t*0.8)*s*15;
-
-      } else if (currentFx === 'shake') {
-        sx = x+Math.sin(t*20+y*0.1)*s*20+(Math.random()-0.5)*s*8;
-        sy = y+Math.cos(t*17+x*0.1)*s*15+(Math.random()-0.5)*s*8;
-
-      } else if (currentFx === 'zoom_pulse') {
-        const pulse = 1+Math.sin(t*3)*s*0.5;
-        sx = cx+(x-cx)/pulse;
-        sy = cy+(y-cy)/pulse;
-
-      } else if (currentFx === 'vortex') {
-        const pull = Math.max(0, 1-r*s*1.2);
-        const angle3 = pull*Math.PI*2;
-        sx = cx+(nx*Math.cos(angle3)-ny*Math.sin(angle3))*cx;
-        sy = cy+(nx*Math.sin(angle3)+ny*Math.cos(angle3))*cy;
-
-      } else if (currentFx === 'radial') {
-        const wave = Math.sin(r*10-t*3)*s*20;
-        const theta2 = Math.atan2(ny,nx);
-        sx = x+Math.cos(theta2)*wave;
-        sy = y+Math.sin(theta2)*wave;
-
-      } else if (currentFx === 'fun') {
-        sx = x+Math.sin(y*0.08+t)*s*40;
-        sy = y+Math.cos(x*0.08+t)*s*40*(y<H/2?1:-1);
-
-      } else if (currentFx === 'prism') {
-        // géré séparément mais on laisse passer
-        sx = x; sy = y;
-      }
-
-      sx = Math.max(0, Math.min(W-1, Math.round(sx)));
-      sy = Math.max(0, Math.min(H-1, Math.round(sy)));
-      const si = (sy*W+sx)*4;
-
-      if (currentFx === 'thermal') {
-        const bright = (sd[si]*0.299+sd[si+1]*0.587+sd[si+2]*0.114)/255;
-        const h2 = (1-bright)*0.67;
-        const [tr,tg,tb] = hslToRgb(h2,1,0.5);
-        dd[di]=tr; dd[di+1]=tg; dd[di+2]=tb; dd[di+3]=255;
-
-      } else if (currentFx === 'vintage') {
-        const rv = sd[si]*0.393+sd[si+1]*0.769+sd[si+2]*0.189;
-        const gv = sd[si]*0.349+sd[si+1]*0.686+sd[si+2]*0.168;
-        const bv = sd[si]*0.272+sd[si+1]*0.534+sd[si+2]*0.131;
-        const mix = 1-s*0.5;
-        dd[di]=Math.min(255,rv*(1-mix)+sd[si]*mix);
-        dd[di+1]=Math.min(255,gv*(1-mix)+sd[si+1]*mix);
-        dd[di+2]=Math.min(255,bv*(1-mix)+sd[si+2]*mix);
-        dd[di+3]=255;
-
-      } else if (currentFx === 'neon') {
-        const lum = (sd[si]+sd[si+1]+sd[si+2])/3;
-        const edge = lum > 80 && lum < 200 ? 1 : 0;
-        const hue = (t*50)%360/360;
-        const [nr,ng,nb] = hslToRgb(hue,1,0.5);
-        dd[di]   = edge ? nr : sd[si]*0.2;
-        dd[di+1] = edge ? ng : sd[si+1]*0.2;
-        dd[di+2] = edge ? nb : sd[si+2]*0.2;
-        dd[di+3] = 255;
-
-      } else if (currentFx === 'psychedelic') {
-        const [h3,sat,l3] = rgbToHsl(sd[si],sd[si+1],sd[si+2]);
-        const newH = (h3 + t*0.1*s + 0.5)%1;
-        const [pr,pg,pb] = hslToRgb(newH, Math.min(1,sat+s*0.5), l3);
-        dd[di]=pr; dd[di+1]=pg; dd[di+2]=pb; dd[di+3]=255;
-
-      } else if (currentFx === 'negative') {
-        const pulse = (Math.sin(t*3)+1)/2*s;
-        dd[di]   = sd[si]+(255-2*sd[si])*pulse;
-        dd[di+1] = sd[si+1]+(255-2*sd[si+1])*pulse;
-        dd[di+2] = sd[si+2]+(255-2*sd[si+2])*pulse;
-        dd[di+3] = 255;
-
-      } else if (currentFx === 'prism') {
-        const shift = Math.round(s*30);
-        const lx = Math.max(0, Math.min(W-1, sx-shift));
-        const rx = Math.max(0, Math.min(W-1, sx+shift));
-        dd[di]   = sd[(sy*W+lx)*4];
-        dd[di+1] = sd[si+1];
-        dd[di+2] = sd[(sy*W+rx)*4+2];
-        dd[di+3] = 255;
-
-      } else {
-        dd[di]=sd[si]; dd[di+1]=sd[si+1]; dd[di+2]=sd[si+2]; dd[di+3]=sd[si+3];
-      }
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      let fx = comboOn && currentFx2!=='none' ? currentFx2 : currentFx;
+      let[sx,sy]=computeWarp(fx,x,y,s,t,cx,cy);
+      applyPixelFx(fx,source,dd,x,y,sx,sy,s,t,cx,cy);
     }
   }
   dCtx.putImageData(dst,0,0);
 }
 
-// démo par défaut
-(function() {
-  const c = document.createElement('canvas');
-  c.width=W; c.height=H;
-  const ctx = c.getContext('2d');
-  const grd = ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,200);
-  grd.addColorStop(0,'#7F77DD'); grd.addColorStop(0.5,'#1D9E75'); grd.addColorStop(1,'#D85A30');
-  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#fff'; ctx.font='bold 80px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('😀',W/2-80,H/2); ctx.fillText('🎭',W/2+80,H/2-20);
-  ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='18px sans-serif';
-  ctx.fillText('Chargez votre image →',W/2,H-28);
-  sCtx.drawImage(c,0,0);
-  srcImg=c; applyEffect();
+// Démo
+(function(){
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const ctx=c.getContext('2d');
+  const grd=ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,200);
+  grd.addColorStop(0,'#7F77DD');grd.addColorStop(0.5,'#1D9E75');grd.addColorStop(1,'#D85A30');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.font='bold 80px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('😀',W/2-80,H/2);ctx.fillText('🎭',W/2+80,H/2-20);
+  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='18px sans-serif';ctx.fillText('Chargez votre image →',W/2,H-28);
+  sCtx.drawImage(c,0,0);srcImg=c;applyEffect();
   loopInterval=setInterval(applyEffect,50);
 })();
 </script>
