@@ -12,15 +12,15 @@
   .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .canvas-wrap label { font-size: 13px; color: #aaa; }
   canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 100%; max-width: 480px; height: auto; }
-  #controls { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
-  button.effect { padding: 8px 15px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
+  #controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 960px; }
+  button.effect { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
   button.effect:hover { background: #0f3460; color: #fff; }
   button.effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
   #sliderRow { display: flex; align-items: center; gap: 12px; }
   #sliderRow label { font-size: 13px; color: #aaa; }
   input[type=range] { width: 180px; accent-color: #7F77DD; }
   #strengthOut { font-size: 14px; font-weight: 500; min-width: 32px; }
-  .btn { padding: 10px 20px; font-size: 14px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; text-align: center; }
+  .btn { padding: 9px 18px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; text-align: center; }
   .btn:hover { background: #0f3460; color: #fff; }
   .btn.green { background: #0f6e56; color: #fff; border-color: #1D9E75; }
   .btn.red { background: #993c1d; color: #fff; border-color: #D85A30; }
@@ -29,40 +29,50 @@
   #camSection { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
   #camStatus { font-size: 12px; color: #aaa; }
   #actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  #catLabel { font-size: 11px; color: #666; width: 100%; text-align: center; margin-top: 4px; }
 </style>
 </head>
 <body>
-
 <h1>🪞 Miroir Déformant</h1>
 
 <div id="canvases">
-  <div class="canvas-wrap">
-    <label>Original</label>
-    <canvas id="src" width="480" height="360"></canvas>
-  </div>
-  <div class="canvas-wrap">
-    <label>Miroir déformant</label>
-    <canvas id="dst" width="480" height="360"></canvas>
-  </div>
+  <div class="canvas-wrap"><label>Original</label><canvas id="src" width="480" height="360"></canvas></div>
+  <div class="canvas-wrap"><label>Miroir déformant</label><canvas id="dst" width="480" height="360"></canvas></div>
 </div>
 
 <div id="controls">
+  <!-- Déformations -->
   <button class="effect active" data-fx="wave">🌊 Vague</button>
   <button class="effect" data-fx="lateral">↔️ Latéral</button>
   <button class="effect" data-fx="bulge">🫧 Bosse</button>
   <button class="effect" data-fx="funnel">🔻 Entonnoir</button>
   <button class="effect" data-fx="swirl">🌀 Tourbillon</button>
   <button class="effect" data-fx="fisheye">👁️ Fisheye</button>
-  <button class="effect" data-fx="fun">🎭 Fun</button>
-  <button class="effect" data-fx="kaleidoscope">💠 Kaléidoscope</button>
-  <button class="effect" data-fx="mirror4">🔲 Miroir x4</button>
-  <button class="effect" data-fx="prism">🌈 Prisme</button>
-  <button class="effect" data-fx="shake">📳 Tremblement</button>
-  <button class="effect" data-fx="liquid">💧 Liquide</button>
   <button class="effect" data-fx="spiral">🌪️ Spirale</button>
-  <button class="effect" data-fx="pixel">🟦 Pixelisé</button>
+  <button class="effect" data-fx="liquid">💧 Liquide</button>
+  <button class="effect" data-fx="shake">📳 Tremblement</button>
+  <button class="effect" data-fx="zoom_pulse">🔭 Zoom pulsant</button>
+  <button class="effect" data-fx="vortex">🕳️ Vortex</button>
+  <button class="effect" data-fx="radial">⭕ Radial</button>
+  <button class="effect" data-fx="fun">🎭 Fun</button>
+  <!-- Miroirs -->
+  <button class="effect" data-fx="mirror4">🔲 Miroir x4</button>
+  <button class="effect" data-fx="mirror_diag">🔀 Diagonal</button>
+  <button class="effect" data-fx="kaleidoscope">💠 Kaléidoscope</button>
+  <!-- Couleurs -->
+  <button class="effect" data-fx="prism">🌈 Prisme</button>
+  <button class="effect" data-fx="thermal">🌡️ Thermique</button>
+  <button class="effect" data-fx="vintage">📷 Vintage</button>
+  <button class="effect" data-fx="neon">✨ Néon</button>
+  <button class="effect" data-fx="psychedelic">🎨 Psychédélique</button>
   <button class="effect" data-fx="negative">🔄 Négatif</button>
+  <!-- Fun -->
   <button class="effect" data-fx="glitch">⚡ Glitch</button>
+  <button class="effect" data-fx="pixel">🟦 Pixelisé</button>
+  <button class="effect" data-fx="mosaic">🧩 Mosaïque</button>
+  <button class="effect" data-fx="matrix">🟩 Matrix</button>
+  <button class="effect" data-fx="explode">💥 Éclaté</button>
+  <button class="effect" data-fx="ascii">🔤 ASCII</button>
 </div>
 
 <div id="sliderRow">
@@ -90,7 +100,7 @@
 const srcC = document.getElementById('src');
 const dstC = document.getElementById('dst');
 const sCtx = srcC.getContext('2d');
-const dCtx = dstC.getContext('2d');
+const dCtx = dstC.getContext('2d', { willReadFrequently: true });
 const W = 480, H = 360;
 let currentFx = 'wave';
 let strength = 50;
@@ -99,6 +109,10 @@ let loopInterval = null;
 let stream = null;
 let video = null;
 let animId = null;
+
+// Matrix state
+const matrixCols = Math.floor(W / 14);
+const matrixDrops = Array(matrixCols).fill(0);
 
 document.querySelectorAll('.effect').forEach(b => {
   b.addEventListener('click', () => {
@@ -167,10 +181,7 @@ document.getElementById('snapBtn').addEventListener('click', () => {
   document.getElementById('camStatus').textContent = '📷 Photo prise';
 });
 
-document.getElementById('stopBtn').addEventListener('click', () => {
-  stopCam();
-  document.getElementById('camStatus').textContent = '';
-});
+document.getElementById('stopBtn').addEventListener('click', () => { stopCam(); document.getElementById('camStatus').textContent = ''; });
 
 function stopCam() {
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
@@ -194,16 +205,39 @@ document.getElementById('saveBtn').addEventListener('click', () => {
   link.click();
 });
 
-function getPixel(sd, x, y) {
-  x = Math.max(0, Math.min(W - 1, Math.round(x)));
-  y = Math.max(0, Math.min(H - 1, Math.round(y)));
-  const i = (y * W + x) * 4;
-  return [sd[i], sd[i+1], sd[i+2], sd[i+3]];
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+      case g: h = ((b-r)/d + 2)/6; break;
+      case b: h = ((r-g)/d + 4)/6; break;
+    }
+  }
+  return [h, s, l];
 }
 
-function setPixel(dd, x, y, r, g, b, a) {
-  const i = (y * W + x) * 4;
-  dd[i] = r; dd[i+1] = g; dd[i+2] = b; dd[i+3] = a;
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1;
+      if (t < 1/6) return p+(q-p)*6*t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+  }
+  return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
 }
 
 function applyEffect() {
@@ -211,213 +245,311 @@ function applyEffect() {
   const t = performance.now() / 1000;
   const cx = W / 2, cy = H / 2;
 
-  // Effets spéciaux qui ne font pas de mapping pixel-à-pixel
-  if (currentFx === 'prism') {
-    const src = sCtx.getImageData(0, 0, W, H);
-    const dst = dCtx.createImageData(W, H);
-    const sd = src.data, dd = dst.data;
-    const shift = Math.round(s * 30);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const [,, bB, bA] = getPixel(sd, x, y);
-        const [rR,,, rA] = getPixel(sd, x - shift, y);
-        const [, gG,, gA] = getPixel(sd, x + shift, y);
-        setPixel(dd, x, y, rR, gG, bB, Math.max(rA, gA, bA));
-      }
-    }
-    dCtx.putImageData(dst, 0, 0);
+  // --- Effets canvas directs ---
+
+  if (currentFx === 'mirror4') {
+    const hw = W/2, hh = H/2;
+    dCtx.clearRect(0,0,W,H);
+    dCtx.drawImage(srcC, 0,0,hw,hh, 0,0,hw,hh);
+    dCtx.save(); dCtx.translate(W,0); dCtx.scale(-1,1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
+    dCtx.save(); dCtx.translate(0,H); dCtx.scale(1,-1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
+    dCtx.save(); dCtx.translate(W,H); dCtx.scale(-1,-1); dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh); dCtx.restore();
     return;
   }
 
-  if (currentFx === 'negative') {
-    const src = sCtx.getImageData(0, 0, W, H);
-    const dst = dCtx.createImageData(W, H);
-    const sd = src.data, dd = dst.data;
-    const pulse = (Math.sin(t * 3) + 1) / 2 * s;
-    for (let i = 0; i < sd.length; i += 4) {
-      dd[i]   = sd[i]   + (255 - 2 * sd[i])   * pulse;
-      dd[i+1] = sd[i+1] + (255 - 2 * sd[i+1]) * pulse;
-      dd[i+2] = sd[i+2] + (255 - 2 * sd[i+2]) * pulse;
-      dd[i+3] = sd[i+3];
-    }
-    dCtx.putImageData(dst, 0, 0);
-    return;
-  }
-
-  if (currentFx === 'glitch') {
-    dCtx.drawImage(srcC, 0, 0);
-    const numSlices = Math.round(s * 15) + 3;
-    for (let i = 0; i < numSlices; i++) {
-      const gy = Math.random() * H;
-      const gh = Math.random() * 20 + 2;
-      const gx = (Math.random() - 0.5) * s * 80;
-      const gr = Math.random();
-      if (gr < 0.5) {
-        dCtx.drawImage(srcC, 0, gy, W, gh, gx, gy, W, gh);
-      } else {
-        // décalage couleur
-        const src2 = sCtx.getImageData(0, gy, W, gh);
-        const tmp = dCtx.createImageData(W, gh);
-        for (let p = 0; p < src2.data.length; p += 4) {
-          tmp.data[p]   = src2.data[p];
-          tmp.data[p+1] = 0;
-          tmp.data[p+2] = src2.data[p+2];
-          tmp.data[p+3] = src2.data[p+3];
-        }
-        dCtx.putImageData(tmp, gx, gy);
-      }
-    }
-    return;
-  }
-
-  if (currentFx === 'pixel') {
-    const blockSize = Math.round(s * 28) + 4;
-    dCtx.clearRect(0, 0, W, H);
-    for (let y = 0; y < H; y += blockSize) {
-      for (let x = 0; x < W; x += blockSize) {
-        const d = sCtx.getImageData(x + blockSize/2 | 0, y + blockSize/2 | 0, 1, 1).data;
-        dCtx.fillStyle = `rgba(${d[0]},${d[1]},${d[2]},${d[3]/255})`;
-        dCtx.fillRect(x, y, blockSize, blockSize);
-      }
-    }
+  if (currentFx === 'mirror_diag') {
+    dCtx.clearRect(0,0,W,H);
+    dCtx.save();
+    dCtx.transform(1,0,0,1,0,0);
+    // Moitié haute normale
+    dCtx.drawImage(srcC,0,0,W,H);
+    // Moitié basse = reflet diagonal
+    dCtx.save();
+    dCtx.translate(W,0); dCtx.transform(-1,0,0,1,0,0);
+    dCtx.drawImage(srcC,0,0,W,H);
+    dCtx.restore();
+    dCtx.restore();
+    // Overlay diagonal flip
+    dCtx.save();
+    dCtx.beginPath(); dCtx.moveTo(0,0); dCtx.lineTo(W,H); dCtx.lineTo(W,0); dCtx.closePath(); dCtx.clip();
+    dCtx.translate(W,0); dCtx.scale(-1,1);
+    dCtx.drawImage(srcC,0,0,W,H);
+    dCtx.restore();
     return;
   }
 
   if (currentFx === 'kaleidoscope') {
-    dCtx.clearRect(0, 0, W, H);
-    const segments = 8;
+    const segments = Math.max(4, Math.round(s * 12) + 4);
     const angle = (Math.PI * 2) / segments;
-    dCtx.save();
-    dCtx.translate(cx, cy);
+    dCtx.clearRect(0,0,W,H);
+    dCtx.save(); dCtx.translate(cx,cy);
     for (let i = 0; i < segments; i++) {
-      dCtx.save();
-      dCtx.rotate(angle * i);
-      dCtx.beginPath();
-      dCtx.moveTo(0, 0);
-      dCtx.arc(0, 0, Math.max(W, H), 0, angle);
-      dCtx.closePath();
-      dCtx.clip();
-      if (i % 2 === 0) {
-        dCtx.drawImage(srcC, -cx, -cy, W, H);
-      } else {
-        dCtx.scale(-1, 1);
-        dCtx.rotate(-angle);
-        dCtx.drawImage(srcC, -cx, -cy, W, H);
-      }
+      dCtx.save(); dCtx.rotate(angle*i);
+      dCtx.beginPath(); dCtx.moveTo(0,0); dCtx.arc(0,0,Math.max(W,H),0,angle); dCtx.closePath(); dCtx.clip();
+      if (i % 2 === 0) { dCtx.drawImage(srcC,-cx,-cy,W,H); }
+      else { dCtx.scale(-1,1); dCtx.rotate(-angle); dCtx.drawImage(srcC,-cx,-cy,W,H); }
       dCtx.restore();
     }
     dCtx.restore();
     return;
   }
 
-  if (currentFx === 'mirror4') {
-    const hw = W / 2, hh = H / 2;
-    dCtx.clearRect(0, 0, W, H);
-    dCtx.drawImage(srcC, 0, 0, hw, hh, 0, 0, hw, hh);
-    dCtx.save(); dCtx.translate(W, 0); dCtx.scale(-1, 1);
-    dCtx.drawImage(srcC, 0, 0, hw, hh, 0, 0, hw, hh);
-    dCtx.restore();
-    dCtx.save(); dCtx.translate(0, H); dCtx.scale(1, -1);
-    dCtx.drawImage(srcC, 0, 0, hw, hh, 0, 0, hw, hh);
-    dCtx.restore();
-    dCtx.save(); dCtx.translate(W, H); dCtx.scale(-1, -1);
-    dCtx.drawImage(srcC, 0, 0, hw, hh, 0, 0, hw, hh);
-    dCtx.restore();
+  if (currentFx === 'pixel') {
+    const blockSize = Math.round(s * 30) + 4;
+    dCtx.clearRect(0,0,W,H);
+    for (let y = 0; y < H; y += blockSize) {
+      for (let x = 0; x < W; x += blockSize) {
+        const d = sCtx.getImageData(x+blockSize/2|0, y+blockSize/2|0, 1, 1).data;
+        dCtx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
+        dCtx.fillRect(x,y,blockSize,blockSize);
+      }
+    }
     return;
   }
 
-  // Effets par mapping pixel
-  const src = sCtx.getImageData(0, 0, W, H);
-  const dst = dCtx.createImageData(W, H);
+  if (currentFx === 'matrix') {
+    dCtx.fillStyle = 'rgba(0,0,0,0.05)';
+    dCtx.fillRect(0,0,W,H);
+    dCtx.fillStyle = '#0f0';
+    dCtx.font = '14px monospace';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';
+    for (let i = 0; i < matrixDrops.length; i++) {
+      const ch = chars[Math.floor(Math.random()*chars.length)];
+      dCtx.fillText(ch, i*14, matrixDrops[i]*14);
+      if (matrixDrops[i]*14 > H && Math.random() > 0.975) matrixDrops[i] = 0;
+      matrixDrops[i] += s * 0.5 + 0.3;
+    }
+    return;
+  }
+
+  if (currentFx === 'glitch') {
+    dCtx.drawImage(srcC,0,0);
+    const numSlices = Math.round(s*18)+3;
+    for (let i = 0; i < numSlices; i++) {
+      const gy = Math.random()*H;
+      const gh = Math.random()*20+2;
+      const gx = (Math.random()-0.5)*s*80;
+      if (Math.random() < 0.5) {
+        dCtx.drawImage(srcC, 0,gy,W,gh, gx,gy,W,gh);
+      } else {
+        const tmp = sCtx.getImageData(0,gy,W,gh);
+        const out = dCtx.createImageData(W,gh);
+        for (let p = 0; p < tmp.data.length; p+=4) {
+          out.data[p]   = tmp.data[p];
+          out.data[p+1] = 0;
+          out.data[p+2] = tmp.data[p+2];
+          out.data[p+3] = tmp.data[p+3];
+        }
+        dCtx.putImageData(out, gx, gy);
+      }
+    }
+    return;
+  }
+
+  if (currentFx === 'mosaic') {
+    const tileSize = Math.round(s*20)+8;
+    dCtx.clearRect(0,0,W,H);
+    for (let y = 0; y < H; y += tileSize) {
+      for (let x = 0; x < W; x += tileSize) {
+        const ox = Math.round((Math.random()-0.5)*s*40);
+        const oy = Math.round((Math.random()-0.5)*s*40);
+        dCtx.drawImage(srcC, x,y,tileSize,tileSize, x+ox,y+oy,tileSize,tileSize);
+      }
+    }
+    return;
+  }
+
+  if (currentFx === 'explode') {
+    dCtx.clearRect(0,0,W,H);
+    const cols = 8, rows = 6;
+    const tw = W/cols, th = H/rows;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const dx = (col - cols/2) * s * 20;
+        const dy = (row - rows/2) * s * 20;
+        const angle = Math.atan2(row-rows/2, col-cols/2);
+        const dist = s * 30;
+        dCtx.drawImage(srcC, col*tw, row*th, tw, th,
+          col*tw + Math.cos(angle)*dist, row*th + Math.sin(angle)*dist, tw, th);
+      }
+    }
+    return;
+  }
+
+  if (currentFx === 'ascii') {
+    const chars2 = ' .:-=+*#%@';
+    const fs = Math.max(6, Math.round(16 - s*10));
+    dCtx.fillStyle = '#000'; dCtx.fillRect(0,0,W,H);
+    dCtx.font = `${fs}px monospace`;
+    for (let y = 0; y < H; y += fs) {
+      for (let x = 0; x < W; x += fs*0.6) {
+        const d = sCtx.getImageData(x|0, y|0, 1, 1).data;
+        const bright = (d[0]*0.299 + d[1]*0.587 + d[2]*0.114) / 255;
+        const ch = chars2[Math.floor(bright*(chars2.length-1))];
+        dCtx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
+        dCtx.fillText(ch, x, y+fs);
+      }
+    }
+    return;
+  }
+
+  // --- Effets pixel par pixel ---
+  const src = sCtx.getImageData(0,0,W,H);
+  const dst = dCtx.createImageData(W,H);
   const sd = src.data, dd = dst.data;
 
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       let sx = x, sy = y;
-      const nx = (x - cx) / cx, ny = (y - cy) / cy;
-      const r = Math.sqrt(nx * nx + ny * ny);
+      const nx = (x-cx)/cx, ny = (y-cy)/cy;
+      const r = Math.sqrt(nx*nx+ny*ny);
+      const di = (y*W+x)*4;
 
       if (currentFx === 'wave') {
-        sx = x + Math.sin((y / H) * Math.PI * 6 + t * 2) * s * 50;
-        sy = y + Math.sin((x / W) * Math.PI * 6 + t * 2) * s * 40;
+        sx = x + Math.sin((y/H)*Math.PI*6+t*2)*s*50;
+        sy = y + Math.sin((x/W)*Math.PI*6+t*2)*s*40;
 
       } else if (currentFx === 'lateral') {
-        sx = x + Math.sin((y / H) * Math.PI * 2) * s * cx * 0.85;
+        sx = x + Math.sin((y/H)*Math.PI*2)*s*cx*0.85;
         sy = y;
 
       } else if (currentFx === 'bulge') {
-        const factor = r < 1 ? 1 / (1 - r * r * s * 0.9 + 0.01) : 1;
-        sx = cx + nx * cx * factor * (1 - s * 0.5);
-        sy = cy + ny * cy * factor * (1 - s * 0.5);
+        const factor = r<1 ? 1/(1-r*r*s*0.9+0.01) : 1;
+        sx = cx+nx*cx*factor*(1-s*0.5);
+        sy = cy+ny*cy*factor*(1-s*0.5);
 
       } else if (currentFx === 'funnel') {
-        const fy = y / H;
-        const pinch = 1 - s * fy * 0.85;
-        const sc = pinch > 0.05 ? pinch : 0.05;
-        sx = cx + (x - cx) / sc;
-        sy = y;
+        const fy = y/H;
+        const sc = Math.max(0.05, 1-s*fy*0.85);
+        sx = cx+(x-cx)/sc; sy = y;
 
       } else if (currentFx === 'swirl') {
-        const angle = r * s * Math.PI * 2;
+        const angle = r*s*Math.PI*2;
         const cos = Math.cos(angle), sin = Math.sin(angle);
-        sx = cx + (nx * cos - ny * sin) * cx;
-        sy = cy + (nx * sin + ny * cos) * cy;
+        sx = cx+(nx*cos-ny*sin)*cx;
+        sy = cy+(nx*sin+ny*cos)*cy;
 
       } else if (currentFx === 'fisheye') {
-        const theta = Math.atan2(ny, nx);
-        const rn = r < 1 ? Math.pow(r, 1 + s * 1.5) : r;
-        sx = cx + Math.cos(theta) * rn * cx;
-        sy = cy + Math.sin(theta) * rn * cy;
-
-      } else if (currentFx === 'fun') {
-        sx = x + Math.sin(y * 0.08 + t) * s * 40;
-        sy = y + Math.cos(x * 0.08 + t) * s * 40 * (y < H / 2 ? 1 : -1);
-
-      } else if (currentFx === 'shake') {
-        const noise = (Math.random() - 0.5);
-        sx = x + Math.sin(t * 20 + y * 0.1) * s * 20 + noise * s * 8;
-        sy = y + Math.cos(t * 17 + x * 0.1) * s * 15 + noise * s * 8;
-
-      } else if (currentFx === 'liquid') {
-        sx = x + Math.sin(y * 0.05 + t * 1.5) * s * 30 + Math.sin(y * 0.12 + t) * s * 15;
-        sy = y + Math.cos(x * 0.05 + t * 1.2) * s * 30 + Math.cos(x * 0.12 + t * 0.8) * s * 15;
+        const theta = Math.atan2(ny,nx);
+        const rn = r<1 ? Math.pow(r,1+s*1.5) : r;
+        sx = cx+Math.cos(theta)*rn*cx;
+        sy = cy+Math.sin(theta)*rn*cy;
 
       } else if (currentFx === 'spiral') {
-        const angle2 = r * s * Math.PI * 3 + t;
-        const cos2 = Math.cos(angle2), sin2 = Math.sin(angle2);
-        const pull = 1 - s * 0.5 * r;
-        sx = cx + (nx * cos2 - ny * sin2) * cx * pull;
-        sy = cy + (nx * sin2 + ny * cos2) * cy * pull;
+        const angle2 = r*s*Math.PI*3+t;
+        const pull = 1-s*0.5*r;
+        sx = cx+(nx*Math.cos(angle2)-ny*Math.sin(angle2))*cx*pull;
+        sy = cy+(nx*Math.sin(angle2)+ny*Math.cos(angle2))*cy*pull;
+
+      } else if (currentFx === 'liquid') {
+        sx = x+Math.sin(y*0.05+t*1.5)*s*30+Math.sin(y*0.12+t)*s*15;
+        sy = y+Math.cos(x*0.05+t*1.2)*s*30+Math.cos(x*0.12+t*0.8)*s*15;
+
+      } else if (currentFx === 'shake') {
+        sx = x+Math.sin(t*20+y*0.1)*s*20+(Math.random()-0.5)*s*8;
+        sy = y+Math.cos(t*17+x*0.1)*s*15+(Math.random()-0.5)*s*8;
+
+      } else if (currentFx === 'zoom_pulse') {
+        const pulse = 1+Math.sin(t*3)*s*0.5;
+        sx = cx+(x-cx)/pulse;
+        sy = cy+(y-cy)/pulse;
+
+      } else if (currentFx === 'vortex') {
+        const pull = Math.max(0, 1-r*s*1.2);
+        const angle3 = pull*Math.PI*2;
+        sx = cx+(nx*Math.cos(angle3)-ny*Math.sin(angle3))*cx;
+        sy = cy+(nx*Math.sin(angle3)+ny*Math.cos(angle3))*cy;
+
+      } else if (currentFx === 'radial') {
+        const wave = Math.sin(r*10-t*3)*s*20;
+        const theta2 = Math.atan2(ny,nx);
+        sx = x+Math.cos(theta2)*wave;
+        sy = y+Math.sin(theta2)*wave;
+
+      } else if (currentFx === 'fun') {
+        sx = x+Math.sin(y*0.08+t)*s*40;
+        sy = y+Math.cos(x*0.08+t)*s*40*(y<H/2?1:-1);
+
+      } else if (currentFx === 'prism') {
+        // géré séparément mais on laisse passer
+        sx = x; sy = y;
       }
 
-      sx = Math.max(0, Math.min(W - 1, Math.round(sx)));
-      sy = Math.max(0, Math.min(H - 1, Math.round(sy)));
-      const si = (sy * W + sx) * 4, di = (y * W + x) * 4;
-      dd[di] = sd[si]; dd[di+1] = sd[si+1]; dd[di+2] = sd[si+2]; dd[di+3] = sd[si+3];
+      sx = Math.max(0, Math.min(W-1, Math.round(sx)));
+      sy = Math.max(0, Math.min(H-1, Math.round(sy)));
+      const si = (sy*W+sx)*4;
+
+      if (currentFx === 'thermal') {
+        const bright = (sd[si]*0.299+sd[si+1]*0.587+sd[si+2]*0.114)/255;
+        const h2 = (1-bright)*0.67;
+        const [tr,tg,tb] = hslToRgb(h2,1,0.5);
+        dd[di]=tr; dd[di+1]=tg; dd[di+2]=tb; dd[di+3]=255;
+
+      } else if (currentFx === 'vintage') {
+        const rv = sd[si]*0.393+sd[si+1]*0.769+sd[si+2]*0.189;
+        const gv = sd[si]*0.349+sd[si+1]*0.686+sd[si+2]*0.168;
+        const bv = sd[si]*0.272+sd[si+1]*0.534+sd[si+2]*0.131;
+        const mix = 1-s*0.5;
+        dd[di]=Math.min(255,rv*(1-mix)+sd[si]*mix);
+        dd[di+1]=Math.min(255,gv*(1-mix)+sd[si+1]*mix);
+        dd[di+2]=Math.min(255,bv*(1-mix)+sd[si+2]*mix);
+        dd[di+3]=255;
+
+      } else if (currentFx === 'neon') {
+        const lum = (sd[si]+sd[si+1]+sd[si+2])/3;
+        const edge = lum > 80 && lum < 200 ? 1 : 0;
+        const hue = (t*50)%360/360;
+        const [nr,ng,nb] = hslToRgb(hue,1,0.5);
+        dd[di]   = edge ? nr : sd[si]*0.2;
+        dd[di+1] = edge ? ng : sd[si+1]*0.2;
+        dd[di+2] = edge ? nb : sd[si+2]*0.2;
+        dd[di+3] = 255;
+
+      } else if (currentFx === 'psychedelic') {
+        const [h3,sat,l3] = rgbToHsl(sd[si],sd[si+1],sd[si+2]);
+        const newH = (h3 + t*0.1*s + 0.5)%1;
+        const [pr,pg,pb] = hslToRgb(newH, Math.min(1,sat+s*0.5), l3);
+        dd[di]=pr; dd[di+1]=pg; dd[di+2]=pb; dd[di+3]=255;
+
+      } else if (currentFx === 'negative') {
+        const pulse = (Math.sin(t*3)+1)/2*s;
+        dd[di]   = sd[si]+(255-2*sd[si])*pulse;
+        dd[di+1] = sd[si+1]+(255-2*sd[si+1])*pulse;
+        dd[di+2] = sd[si+2]+(255-2*sd[si+2])*pulse;
+        dd[di+3] = 255;
+
+      } else if (currentFx === 'prism') {
+        const shift = Math.round(s*30);
+        const lx = Math.max(0, Math.min(W-1, sx-shift));
+        const rx = Math.max(0, Math.min(W-1, sx+shift));
+        dd[di]   = sd[(sy*W+lx)*4];
+        dd[di+1] = sd[si+1];
+        dd[di+2] = sd[(sy*W+rx)*4+2];
+        dd[di+3] = 255;
+
+      } else {
+        dd[di]=sd[si]; dd[di+1]=sd[si+1]; dd[di+2]=sd[si+2]; dd[di+3]=sd[si+3];
+      }
     }
   }
-  dCtx.putImageData(dst, 0, 0);
+  dCtx.putImageData(dst,0,0);
 }
 
 // démo par défaut
 (function() {
   const c = document.createElement('canvas');
-  c.width = W; c.height = H;
+  c.width=W; c.height=H;
   const ctx = c.getContext('2d');
-  const grd = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 200);
-  grd.addColorStop(0, '#7F77DD');
-  grd.addColorStop(0.5, '#1D9E75');
-  grd.addColorStop(1, '#D85A30');
-  ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 80px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('😀', W/2 - 80, H/2);
-  ctx.fillText('🎭', W/2 + 80, H/2 - 20);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '18px sans-serif';
-  ctx.fillText('Chargez votre image →', W/2, H - 28);
-  sCtx.drawImage(c, 0, 0);
-  srcImg = c;
-  applyEffect();
-  loopInterval = setInterval(applyEffect, 50);
+  const grd = ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,200);
+  grd.addColorStop(0,'#7F77DD'); grd.addColorStop(0.5,'#1D9E75'); grd.addColorStop(1,'#D85A30');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.font='bold 80px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('😀',W/2-80,H/2); ctx.fillText('🎭',W/2+80,H/2-20);
+  ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='18px sans-serif';
+  ctx.fillText('Chargez votre image →',W/2,H-28);
+  sCtx.drawImage(c,0,0);
+  srcImg=c; applyEffect();
+  loopInterval=setInterval(applyEffect,50);
 })();
 </script>
 </body>
