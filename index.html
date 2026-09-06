@@ -367,20 +367,33 @@ function onFsChange() {
   const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
   document.getElementById('fs-overlay').classList.toggle('visible', isFs);
   if (isFs) {
-    // Fond noir sur tout le wrapper
     document.getElementById('fs-wrapper').style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:8000;';
-    // Cacher les canvases normaux
     document.getElementById('canvases').style.display = 'none';
-    // Mettre dst en plein écran absolu dans le wrapper
-    dstC.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;border-radius:0;display:block;';
-    document.getElementById('fs-wrapper').appendChild(dstC);
+    // Créer un canvas de couverture qui copie dstC en temps réel
+    let fsCanvas = document.getElementById('fs-canvas');
+    if (!fsCanvas) {
+      fsCanvas = document.createElement('canvas');
+      fsCanvas.id = 'fs-canvas';
+      fsCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;';
+      document.getElementById('fs-wrapper').appendChild(fsCanvas);
+    }
+    fsCanvas.width = W; fsCanvas.height = H;
+    fsCanvas.style.display = 'block';
+    // Boucle de copie
+    function fsCopy() {
+      if (!(document.fullscreenElement || document.webkitFullscreenElement)) return;
+      fsCanvas.getContext('2d').drawImage(dstC, 0, 0);
+      requestAnimationFrame(fsCopy);
+    }
+    fsCopy();
   } else {
     document.getElementById('fs-wrapper').style.cssText = 'position:relative;';
     document.getElementById('canvases').style.display = '';
-    dstC.style.cssText = '';
-    // Remettre dst dans sa canvas-wrap
-    document.querySelector('#canvases .canvas-wrap:last-child').appendChild(dstC);
+    const fsCanvas = document.getElementById('fs-canvas');
+    if (fsCanvas) fsCanvas.style.display = 'none';
     document.getElementById('fs-panel').classList.remove('open');
+    document.getElementById('canvases').style.flexDirection = 'row';
+    document.getElementById('canvases').style.flexWrap = 'wrap';
   }
 }
 document.addEventListener('fullscreenchange', onFsChange);
