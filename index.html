@@ -301,6 +301,9 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('snapBtn').style.display = 'inline-block';
       document.getElementById('stopBtn').style.display = 'inline-block';
       document.getElementById('camStatus').textContent = '🟢 Camera active';
+      // Agrandir les canvas en mode cam
+      srcC.style.width = '640px';
+      dstC.style.width = '640px';
       camLoop();
     };
   } catch(e) {
@@ -329,6 +332,9 @@ function stopCam() {
   document.getElementById('camBtn').style.display = 'inline-block';
   document.getElementById('snapBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
+  // Remettre taille normale
+  srcC.style.width = '';
+  dstC.style.width = '';
 }
 
 function camLoop() {
