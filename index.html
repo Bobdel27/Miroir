@@ -11,7 +11,9 @@
   #canvases { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
   .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .canvas-wrap label { font-size: 13px; color: #aaa; }
-  canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 480px; max-width: 100%; height: auto; image-rendering: auto; }
+  canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 480px; max-width: 100%; height: auto; image-rendering: auto; -webkit-media-controls: none; }
+  canvas::-webkit-media-controls { display: none !important; }
+  video { display: none !important; }
   #controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 960px; }
   button.effect { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
   button.effect:hover { background: #0f3460; color: #fff; }
@@ -106,9 +108,13 @@
     <button class="fs-effect" data-fx="glitch">⚡ Glitch</button>
     <button class="fs-effect" data-fx="pixel">🟦 Pixelisé</button>
     <button class="fs-effect" data-fx="mosaic">🧩 Mosaïque</button>
-    <button class="fs-effect" data-fx="matrix">🟩 Matrix</button>
-    <button class="fs-effect" data-fx="explode">💥 Éclaté</button>
-    <button class="fs-effect" data-fx="ascii">🔤 ASCII</button>
+    <button class="fs-effect" data-fx="mirror_h">↕️ Miroir H</button>
+    <button class="fs-effect" data-fx="tunnel">🕳️ Tunnel</button>
+    <button class="fs-effect" data-fx="crystal">💎 Cristal</button>
+    <button class="fs-effect" data-fx="halo">🔆 Halo</button>
+    <button class="fs-effect" data-fx="sepia">🟤 Sépia</button>
+    <button class="fs-effect" data-fx="zoom_region">🔎 Zoom région</button>
+
   </div>
   <div id="fs-panel-sliders">
     <label>Intensité</label>
@@ -148,9 +154,13 @@
   <button class="effect" data-fx="glitch">⚡ Glitch</button>
   <button class="effect" data-fx="pixel">🟦 Pixelisé</button>
   <button class="effect" data-fx="mosaic">🧩 Mosaïque</button>
-  <button class="effect" data-fx="matrix">🟩 Matrix</button>
-  <button class="effect" data-fx="explode">💥 Éclaté</button>
-  <button class="effect" data-fx="ascii">🔤 ASCII</button>
+  <button class="effect" data-fx="mirror_h">↕️ Miroir H</button>
+  <button class="effect" data-fx="tunnel">🕳️ Tunnel</button>
+  <button class="effect" data-fx="crystal">💎 Cristal</button>
+  <button class="effect" data-fx="halo">🔆 Halo</button>
+  <button class="effect" data-fx="sepia">🟤 Sépia</button>
+  <button class="effect" data-fx="zoom_region">🔎 Zoom région</button>
+
 </div>
 
 <div class="row">
@@ -231,12 +241,6 @@ window.addEventListener('load', () => {
   }
 });
 
-// Matrix
-const matrixC = document.createElement('canvas'); matrixC.width=W; matrixC.height=H;
-const mCtx = matrixC.getContext('2d');
-mCtx.fillStyle='#000'; mCtx.fillRect(0,0,W,H);
-const matrixDrops = Array(Math.floor(W/14)).fill(1);
-
 document.querySelectorAll('.effect').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.effect').forEach(x => x.classList.remove('active'));
@@ -282,7 +286,11 @@ document.getElementById('camBtn').addEventListener('click', async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({video:{width:W,height:H,facingMode:'user'}});
     video = document.createElement('video');
-    video.srcObject = stream; video.setAttribute('playsinline',true); video.play();
+    video.srcObject = stream; 
+    video.setAttribute('playsinline', true);
+    video.setAttribute('disablepictureinpicture', true);
+    video.controls = false;
+    video.play();
     video.onloadedmetadata = () => {
       document.getElementById('camBtn').style.display='none';
       document.getElementById('snapBtn').style.display='inline-block';
@@ -539,22 +547,25 @@ function colorFxHD(fx,sd,dd,di,si,sx,sy,s,t,W){
   else if(fx==='psychedelic'){const[h,sat,l]=rgbToHsl(sd[si],sd[si+1],sd[si+2]);const[r,g,b]=hslToRgb((h+t*.1*s+.5)%1,Math.min(1,sat+s*.5),l);dd[di]=r;dd[di+1]=g;dd[di+2]=b;dd[di+3]=255;}
   else if(fx==='negative'){const p=(Math.sin(t*3)+1)/2*s;dd[di]=sd[si]+(255-2*sd[si])*p;dd[di+1]=sd[si+1]+(255-2*sd[si+1])*p;dd[di+2]=sd[si+2]+(255-2*sd[si+2])*p;dd[di+3]=255;}
   else if(fx==='prism'){const shift=Math.round(s*60),lx=Math.max(0,Math.min(W-1,sx-shift)),rx=Math.max(0,Math.min(W-1,sx+shift));dd[di]=sd[(sy*W+lx)*4];dd[di+1]=sd[si+1];dd[di+2]=sd[(sy*W+rx)*4+2];dd[di+3]=255;}
+  else if(fx==='halo'){const lum=(sd[si]+sd[si+1]+sd[si+2])/3;const pulse=(Math.sin(t*3)+1)/2;const glow=lum>120?Math.min(255,lum+s*100*pulse):lum*0.3;const hue=(t*30)%360/360;const[hr,hg,hb]=hslToRgb(hue,1,.5);dd[di]=Math.min(255,sd[si]+glow*hr/255*s*150);dd[di+1]=Math.min(255,sd[si+1]+glow*hg/255*s*150);dd[di+2]=Math.min(255,sd[si+2]+glow*hb/255*s*150);dd[di+3]=255;}
+  else if(fx==='sepia'){const pulse=(Math.sin(t*2)+1)/2*s;const rv=sd[si]*.393+sd[si+1]*.769+sd[si+2]*.189,gv=sd[si]*.349+sd[si+1]*.686+sd[si+2]*.168,bv=sd[si]*.272+sd[si+1]*.534+sd[si+2]*.131;dd[di]=Math.min(255,rv*pulse+sd[si]*(1-pulse));dd[di+1]=Math.min(255,gv*pulse+sd[si+1]*(1-pulse));dd[di+2]=Math.min(255,bv*pulse+sd[si+2]*(1-pulse));dd[di+3]=255;}
+  else if(fx==='zoom_region'){dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=sd[si+3];}
   else{dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=sd[si+3];}
 }
 
 function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;}}return[h,s,l];}
 function hslToRgb(h,s,l){if(s===0){const v=Math.round(l*255);return[v,v,v];}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};return[Math.round(f(p,q,h+1/3)*255),Math.round(f(p,q,h)*255),Math.round(f(p,q,h-1/3)*255)];}
 
-function drawMatrix(s){mCtx.fillStyle='rgba(0,0,0,0.05)';mCtx.fillRect(0,0,W,H);mCtx.fillStyle='#0f0';mCtx.font='14px monospace';const ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%';for(let i=0;i<matrixDrops.length;i++){mCtx.fillText(ch[Math.floor(Math.random()*ch.length)],i*14,matrixDrops[i]*14);if(matrixDrops[i]*14>H&&Math.random()>.975)matrixDrops[i]=0;matrixDrops[i]+=s*.6+.4;}dCtx.drawImage(matrixC,0,0);}
-
 function applyCanvasFx(fx,s,t,cx,cy){
-  if(fx==='matrix'){drawMatrix(s);return true;}
   if(fx==='mirror4'){const hw=W/2,hh=H/2;dCtx.clearRect(0,0,W,H);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.save();dCtx.translate(W,0);dCtx.scale(-1,1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();dCtx.save();dCtx.translate(0,H);dCtx.scale(1,-1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();dCtx.save();dCtx.translate(W,H);dCtx.scale(-1,-1);dCtx.drawImage(srcC,0,0,hw,hh,0,0,hw,hh);dCtx.restore();return true;}
   if(fx==='mirror_diag'){dCtx.clearRect(0,0,W,H);dCtx.drawImage(srcC,0,0,W,H);dCtx.save();dCtx.beginPath();dCtx.moveTo(0,0);dCtx.lineTo(W,H);dCtx.lineTo(W,0);dCtx.closePath();dCtx.clip();dCtx.translate(W,0);dCtx.scale(-1,1);dCtx.drawImage(srcC,0,0,W,H);dCtx.restore();return true;}
   if(fx==='kaleidoscope'){const segs=Math.max(4,Math.round(s*12)+4),ang=(Math.PI*2)/segs;dCtx.clearRect(0,0,W,H);dCtx.save();dCtx.translate(cx,cy);for(let i=0;i<segs;i++){dCtx.save();dCtx.rotate(ang*i);dCtx.beginPath();dCtx.moveTo(0,0);dCtx.arc(0,0,Math.max(W,H),0,ang);dCtx.closePath();dCtx.clip();if(i%2===0){dCtx.drawImage(srcC,-cx,-cy,W,H);}else{dCtx.scale(-1,1);dCtx.rotate(-ang);dCtx.drawImage(srcC,-cx,-cy,W,H);}dCtx.restore();}dCtx.restore();return true;}
   if(fx==='pixel'){const bs=Math.round(s*30)+4;dCtx.clearRect(0,0,W,H);for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=sCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;dCtx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;dCtx.fillRect(x,y,bs,bs);}return true;}
   if(fx==='glitch'){dCtx.drawImage(srcC,0,0);const n=Math.round(s*18)+3;for(let i=0;i<n;i++){const gy=Math.random()*H,gh=Math.random()*20+2,gx=(Math.random()-.5)*s*80;if(Math.random()<.5){dCtx.drawImage(srcC,0,gy,W,gh,gx,gy,W,gh);}else{const tmp=sCtx.getImageData(0,gy,W,gh),out=dCtx.createImageData(W,gh);for(let p=0;p<tmp.data.length;p+=4){out.data[p]=tmp.data[p];out.data[p+2]=tmp.data[p+2];out.data[p+3]=tmp.data[p+3];}dCtx.putImageData(out,gx,gy);}}return true;}
   if(fx==='mosaic'){const ts=Math.round(s*20)+8;dCtx.clearRect(0,0,W,H);for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=Math.round((Math.random()-.5)*s*40),oy=Math.round((Math.random()-.5)*s*40);dCtx.drawImage(srcC,x,y,ts,ts,x+ox,y+oy,ts,ts);}return true;}
+  if(fx==='mirror_h'){dCtx.clearRect(0,0,W,H);dCtx.drawImage(srcC,0,0,W,H/2);dCtx.save();dCtx.translate(0,H);dCtx.scale(1,-1);dCtx.drawImage(srcC,0,0,W,H/2);dCtx.restore();return true;}
+  if(fx==='tunnel'){const steps=Math.round(s*12)+4;dCtx.clearRect(0,0,W,H);for(let i=steps;i>=0;i--){const scale=1-i/steps*.9,ox=(W-(W*scale))/2,oy=(H-(H*scale))/2;dCtx.drawImage(srcC,ox,oy,W*scale,H*scale);}return true;}
+  if(fx==='crystal'){const size=Math.round(s*40)+10;dCtx.clearRect(0,0,W,H);for(let y=0;y<H;y+=size)for(let x=0;x<W;x+=size){const cx2=x+size/2,cy2=y+size/2;dCtx.save();dCtx.beginPath();if(Math.random()>.5){dCtx.moveTo(x,y);dCtx.lineTo(x+size,y);dCtx.lineTo(cx2,cy2);}else{dCtx.moveTo(x+size,y);dCtx.lineTo(x+size,y+size);dCtx.lineTo(cx2,cy2);}dCtx.closePath();dCtx.clip();dCtx.drawImage(srcC,0,0,W,H);dCtx.restore();}return true;}
   if(fx==='explode'){const cols=8,rows=6,tw=W/cols,th=H/rows;dCtx.clearRect(0,0,W,H);for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){const a=Math.atan2(row-rows/2,col-cols/2),d=s*30;dCtx.drawImage(srcC,col*tw,row*th,tw,th,col*tw+Math.cos(a)*d,row*th+Math.sin(a)*d,tw,th);}return true;}
   if(fx==='ascii'){const ch=' .:-=+*#%@',fs=Math.max(6,Math.round(16-s*10));dCtx.fillStyle='#000';dCtx.fillRect(0,0,W,H);dCtx.font=`${fs}px monospace`;for(let y=0;y<H;y+=fs)for(let x=0;x<W;x+=fs*.6){const d=sCtx.getImageData(x|0,y|0,1,1).data,b=(d[0]*.299+d[1]*.587+d[2]*.114)/255;dCtx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;dCtx.fillText(ch[Math.floor(b*(ch.length-1))],x,y+fs);}return true;}
   return false;
@@ -574,6 +585,7 @@ function warp(fx,x,y,s,t,cx,cy){let sx=x,sy=y;const nx=(x-cx)/cx,ny=(y-cy)/cy,r=
   else if(fx==='vortex'){const pull=Math.max(0,1-r*s*1.2),a3=pull*Math.PI*2;sx=cx+(nx*Math.cos(a3)-ny*Math.sin(a3))*cx;sy=cy+(nx*Math.sin(a3)+ny*Math.cos(a3))*cy;}
   else if(fx==='radial'){const w2=Math.sin(r*10-t*3)*s*20,th2=Math.atan2(ny,nx);sx=x+Math.cos(th2)*w2;sy=y+Math.sin(th2)*w2;}
   else if(fx==='fun'){sx=x+Math.sin(y*.08+t)*s*40;sy=y+Math.cos(x*.08+t)*s*40*(y<H/2?1:-1);}
+  else if(fx==='zoom_region'){const zx=cx+Math.cos(t*.7)*cx*.4,zy=cy+Math.sin(t*.5)*cy*.4,zr=80+s*60;const dx=x-zx,dy=y-zy,dr=Math.sqrt(dx*dx+dy*dy);if(dr<zr){const zoom=1+s*2;sx=zx+(dx/zoom);sy=zy+(dy/zoom);}}
   return[sx,sy];
 }
 
