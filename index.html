@@ -197,7 +197,9 @@
   <button class="btn purple" id="camBtn">📷 Activer caméra</button>
   <button class="btn green" id="snapBtn" style="display:none">📸 Prendre photo</button>
   <button class="btn red" id="stopBtn" style="display:none">⏹ Arrêter</button>
+  <button class="btn orange" id="fullBtn">⛶ Plein écran</button>
   <span id="camStatus"></span>
+  <span id="fsHint" style="font-size:11px;color:#888;width:100%;text-align:center">💡 Pour la caméra en plein écran : activer la caméra d'abord, puis plein écran</span>
 </div>
 
 <div class="row">
@@ -206,7 +208,6 @@
   <label class="btn" for="camInIOS">📱 Photo iOS/Chromebook</label>
   <input type="file" id="camInIOS" accept="image/*" capture="user">
   <button class="btn green" id="saveBtn" style="display:none">💾 Sauvegarder</button>
-  <button class="btn orange" id="fullBtn">⛶ Plein écran</button>
   <button class="btn red" id="recBtn">⏺ Enregistrer vidéo</button>
   <span id="recStatus"></span>
   <span id="recInfo" style="font-size:11px;color:#666;width:100%;text-align:center"></span>
@@ -367,33 +368,18 @@ function onFsChange() {
   const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
   document.getElementById('fs-overlay').classList.toggle('visible', isFs);
   if (isFs) {
-    document.getElementById('fs-wrapper').style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:8000;';
-    document.getElementById('canvases').style.display = 'none';
-    // Créer un canvas de couverture qui copie dstC en temps réel
-    let fsCanvas = document.getElementById('fs-canvas');
-    if (!fsCanvas) {
-      fsCanvas = document.createElement('canvas');
-      fsCanvas.id = 'fs-canvas';
-      fsCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;';
-      document.getElementById('fs-wrapper').appendChild(fsCanvas);
-    }
-    fsCanvas.width = W; fsCanvas.height = H;
-    fsCanvas.style.display = 'block';
-    // Boucle de copie
-    function fsCopy() {
-      if (!(document.fullscreenElement || document.webkitFullscreenElement)) return;
-      fsCanvas.getContext('2d').drawImage(dstC, 0, 0);
-      requestAnimationFrame(fsCopy);
-    }
-    fsCopy();
+    document.getElementById('fs-wrapper').style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:8000;display:flex;align-items:center;justify-content:center;';
+    document.getElementById('canvases').style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;';
+    srcC.parentElement.style.display = 'none';
+    dstC.parentElement.style.cssText = 'display:flex;width:100%;height:100%;align-items:center;justify-content:center;';
+    dstC.style.cssText = 'width:100% !important;height:100% !important;max-width:100% !important;object-fit:contain;border-radius:0;';
   } else {
     document.getElementById('fs-wrapper').style.cssText = 'position:relative;';
-    document.getElementById('canvases').style.display = '';
-    const fsCanvas = document.getElementById('fs-canvas');
-    if (fsCanvas) fsCanvas.style.display = 'none';
+    document.getElementById('canvases').style.cssText = '';
+    srcC.parentElement.style.cssText = '';
+    dstC.parentElement.style.cssText = '';
+    dstC.style.cssText = '';
     document.getElementById('fs-panel').classList.remove('open');
-    document.getElementById('canvases').style.flexDirection = 'row';
-    document.getElementById('canvases').style.flexWrap = 'wrap';
   }
 }
 document.addEventListener('fullscreenchange', onFsChange);
