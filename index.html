@@ -34,14 +34,91 @@
   #combo-toggle { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; }
   #combo-toggle.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
   #recStatus { font-size: 12px; color: #f90; }
+
+  /* Overlay plein écran */
+  #fs-overlay { display: none; position: fixed; z-index: 9999; bottom: 24px; right: 24px; flex-direction: column; gap: 12px; align-items: flex-end; }
+  #fs-overlay.visible { display: flex; }
+  .fs-btn { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: transform .15s; }
+  .fs-btn:hover { transform: scale(1.1); }
+  #fs-snap { background: rgba(15,110,86,0.85); }
+  #fs-rec  { background: rgba(139,0,0,0.85); }
+  #fs-rec.rec { animation: blink 1s infinite; }
+  #fs-style { background: rgba(83,58,183,0.85); }
+  #fs-close { background: rgba(60,60,80,0.85); font-size: 18px; }
+
+  /* Panneau effets plein écran */
+  #fs-panel { display: none; position: fixed; z-index: 9998; bottom: 0; left: 0; right: 0;
+    background: rgba(20,20,40,0.95); backdrop-filter: blur(12px);
+    padding: 20px 16px 32px; border-top: 1px solid #444;
+    flex-direction: column; gap: 14px; align-items: center;
+    transform: translateY(100%); transition: transform .3s ease; }
+  #fs-panel.open { display: flex; transform: translateY(0); }
+  #fs-panel-effects { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 700px; }
+  .fs-effect { padding: 8px 14px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; }
+  .fs-effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
+  #fs-panel-sliders { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  #fs-panel-sliders label { font-size: 13px; color: #aaa; }
+  #fs-panel-sliders input[type=range] { width: 130px; accent-color: #7F77DD; }
+  #fs-panel-close { font-size: 13px; color: #888; cursor: pointer; text-decoration: underline; }
 </style>
 </head>
 <body>
 <h1>🪞 Miroir Déformant</h1>
 
 <div id="canvases">
-  <div class="canvas-wrap"><label>Original</label><canvas id="src" width="1920" height="1080"></canvas></div>
-  <div class="canvas-wrap"><label>Miroir déformant</label><canvas id="dst" width="1920" height="1080"></canvas></div>
+  <div class="canvas-wrap"><label>Original</label><canvas id="src" width="960" height="540"></canvas></div>
+  <div class="canvas-wrap"><label>Miroir déformant</label><canvas id="dst" width="960" height="540"></canvas></div>
+</div>
+
+<!-- Overlay boutons plein écran -->
+<div id="fs-overlay">
+  <button class="fs-btn" id="fs-snap" title="Sauvegarder photo">📸</button>
+  <button class="fs-btn" id="fs-rec" title="Enregistrer vidéo">⏺</button>
+  <button class="fs-btn" id="fs-style" title="Changer effet">🎨</button>
+  <button class="fs-btn" id="fs-close" title="Quitter plein écran">✕</button>
+</div>
+
+<!-- Panneau effets plein écran -->
+<div id="fs-panel">
+  <div id="fs-panel-effects">
+    <button class="fs-effect active" data-fx="wave">🌊 Vague</button>
+    <button class="fs-effect" data-fx="lateral">↔️ Latéral</button>
+    <button class="fs-effect" data-fx="bulge">🫧 Bosse</button>
+    <button class="fs-effect" data-fx="funnel">🔻 Entonnoir</button>
+    <button class="fs-effect" data-fx="swirl">🌀 Tourbillon</button>
+    <button class="fs-effect" data-fx="fisheye">👁️ Fisheye</button>
+    <button class="fs-effect" data-fx="spiral">🌪️ Spirale</button>
+    <button class="fs-effect" data-fx="liquid">💧 Liquide</button>
+    <button class="fs-effect" data-fx="shake">📳 Tremblement</button>
+    <button class="fs-effect" data-fx="zoom_pulse">🔭 Zoom</button>
+    <button class="fs-effect" data-fx="vortex">🕳️ Vortex</button>
+    <button class="fs-effect" data-fx="radial">⭕ Radial</button>
+    <button class="fs-effect" data-fx="fun">🎭 Fun</button>
+    <button class="fs-effect" data-fx="mirror4">🔲 Miroir x4</button>
+    <button class="fs-effect" data-fx="mirror_diag">🔀 Diagonal</button>
+    <button class="fs-effect" data-fx="kaleidoscope">💠 Kaléidoscope</button>
+    <button class="fs-effect" data-fx="prism">🌈 Prisme</button>
+    <button class="fs-effect" data-fx="thermal">🌡️ Thermique</button>
+    <button class="fs-effect" data-fx="vintage">📷 Vintage</button>
+    <button class="fs-effect" data-fx="neon">✨ Néon</button>
+    <button class="fs-effect" data-fx="psychedelic">🎨 Psychédélique</button>
+    <button class="fs-effect" data-fx="negative">🔄 Négatif</button>
+    <button class="fs-effect" data-fx="glitch">⚡ Glitch</button>
+    <button class="fs-effect" data-fx="pixel">🟦 Pixelisé</button>
+    <button class="fs-effect" data-fx="mosaic">🧩 Mosaïque</button>
+    <button class="fs-effect" data-fx="matrix">🟩 Matrix</button>
+    <button class="fs-effect" data-fx="explode">💥 Éclaté</button>
+    <button class="fs-effect" data-fx="ascii">🔤 ASCII</button>
+  </div>
+  <div id="fs-panel-sliders">
+    <label>Intensité</label>
+    <input type="range" id="fs-strength" min="1" max="100" value="50">
+    <span class="val" id="fs-strengthOut">50</span>
+    <label>Vitesse</label>
+    <input type="range" id="fs-speed" min="1" max="200" value="100">
+    <span class="val" id="fs-speedOut">1.0x</span>
+  </div>
+  <span id="fs-panel-close">✕ Fermer</span>
 </div>
 
 <div id="controls">
@@ -129,7 +206,13 @@ const srcC = document.getElementById('src');
 const dstC = document.getElementById('dst');
 const sCtx = srcC.getContext('2d');
 const dCtx = dstC.getContext('2d', { willReadFrequently: true });
-const W = 1920, H = 1080;
+// Résolution affichage (fluide) vs sauvegarde (HD)
+const RW = 960, RH = 540;   // rendu temps réel
+const SW = 1920, SH = 1080; // sauvegarde HD
+const W = RW, H = RH;       // alias utilisé par les effets
+// Redimensionner les canvas internes
+srcC.width = RW; srcC.height = RH;
+dstC.width = RW; dstC.height = RH;
 let currentFx = 'wave', currentFx2 = 'none', comboOn = false;
 let strength = 50, speedMult = 1;
 let srcImg = null, loopInterval = null;
@@ -182,7 +265,10 @@ function loadFromFile(file) {
     srcImg = img; sCtx.clearRect(0,0,W,H);
     const scale = Math.max(W/img.width, H/img.height);
     sCtx.drawImage(img,(W-img.width*scale)/2,(H-img.height*scale)/2,img.width*scale,img.height*scale);
-    clearInterval(loopInterval); applyEffect(); loopInterval = setInterval(applyEffect,50);
+    clearInterval(loopInterval); cancelAnimationFrame(loopInterval);
+    applyEffect();
+    function renderLoop(){ applyEffect(); loopInterval=requestAnimationFrame(renderLoop); }
+    renderLoop();
     document.getElementById('saveBtn').style.display='inline-block';
   };
   img.src = URL.createObjectURL(file);
@@ -209,7 +295,7 @@ document.getElementById('camBtn').addEventListener('click', async () => {
 document.getElementById('snapBtn').addEventListener('click', () => {
   const frozen = sCtx.getImageData(0,0,W,H); stopCam();
   sCtx.putImageData(frozen,0,0); srcImg=srcC; applyEffect();
-  loopInterval=setInterval(applyEffect,50);
+  loopInterval=requestAnimationFrame(function loop(){ applyEffect(); loopInterval=requestAnimationFrame(loop); });
   document.getElementById('camStatus').textContent='📷 Photo prise';
   document.getElementById('saveBtn').style.display='inline-block';
 });
@@ -230,25 +316,78 @@ function camLoop() {
 
 // Plein écran
 document.getElementById('fullBtn').addEventListener('click', () => {
-  const wrap = dstC.parentElement;
-  if (wrap.requestFullscreen) wrap.requestFullscreen();
-  else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
-  else if (dstC.requestFullscreen) dstC.requestFullscreen();
-  else if (dstC.webkitRequestFullscreen) dstC.webkitRequestFullscreen();
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
 });
+
 function onFsChange() {
   const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  document.getElementById('fs-overlay').classList.toggle('visible', isFs);
   if (isFs) {
+    dstC.style.position='fixed'; dstC.style.top='0'; dstC.style.left='0';
     dstC.style.width='100vw'; dstC.style.height='100vh'; dstC.style.objectFit='contain';
+    dstC.style.zIndex='9990'; dstC.style.borderRadius='0';
   } else {
+    dstC.style.position=''; dstC.style.top=''; dstC.style.left='';
     dstC.style.width=''; dstC.style.height=''; dstC.style.objectFit='';
-    // Forcer le retour en flex-row
+    dstC.style.zIndex=''; dstC.style.borderRadius='';
+    document.getElementById('fs-panel').classList.remove('open');
     document.getElementById('canvases').style.flexDirection='row';
     document.getElementById('canvases').style.flexWrap='wrap';
   }
 }
 document.addEventListener('fullscreenchange', onFsChange);
 document.addEventListener('webkitfullscreenchange', onFsChange);
+
+// Boutons overlay plein écran
+// fs-snap géré dans saveHD()
+
+document.getElementById('fs-rec').addEventListener('click', () => {
+  document.getElementById('recBtn').click(); // réutilise la même logique
+  const isRec = document.getElementById('recBtn').classList.contains('rec');
+  document.getElementById('fs-rec').classList.toggle('rec', isRec);
+  document.getElementById('fs-rec').textContent = isRec ? '⏹' : '⏺';
+});
+
+document.getElementById('fs-style').addEventListener('click', () => {
+  const panel = document.getElementById('fs-panel');
+  panel.classList.toggle('open');
+});
+
+document.getElementById('fs-close').addEventListener('click', () => {
+  if (document.exitFullscreen) document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+});
+
+document.getElementById('fs-panel-close').addEventListener('click', () => {
+  document.getElementById('fs-panel').classList.remove('open');
+});
+
+// Effets dans le panneau plein écran — synchronisés avec les boutons principaux
+document.querySelectorAll('.fs-effect').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.effect, .fs-effect').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    // Sync le bouton principal correspondant
+    document.querySelectorAll('.effect').forEach(x => { if (x.dataset.fx === b.dataset.fx) x.classList.add('active'); });
+    currentFx = b.dataset.fx;
+  });
+});
+
+// Sliders panneau plein écran — synchronisés
+document.getElementById('fs-strength').addEventListener('input', e => {
+  strength = +e.target.value;
+  document.getElementById('fs-strengthOut').textContent = strength;
+  document.getElementById('strength').value = strength;
+  document.getElementById('strengthOut').textContent = strength;
+});
+document.getElementById('fs-speed').addEventListener('input', e => {
+  speedMult = +e.target.value / 100;
+  document.getElementById('fs-speedOut').textContent = speedMult.toFixed(1)+'x';
+  document.getElementById('speed').value = e.target.value;
+  document.getElementById('speedOut').textContent = speedMult.toFixed(1)+'x';
+});
 
 // Enregistrement : photos séquentielles → télécharge des PNG numérotés
 // Compatible tous navigateurs y compris Safari/iOS
@@ -307,10 +446,72 @@ document.getElementById('recBtn').addEventListener('click', () => {
   }
 });
 
-document.getElementById('saveBtn').addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.download='miroir_deformant.png'; a.href=dstC.toDataURL('image/png'); a.click();
-});
+document.getElementById('saveBtn').addEventListener('click', () => { saveHD(); });
+document.getElementById('fs-snap').addEventListener('click', () => { saveHD(); });
+
+function saveHD() {
+  // Recalcul en 1920×1080 sur canvas offscreen
+  const oSrc = document.createElement('canvas'); oSrc.width=SW; oSrc.height=SH;
+  const oCtx = oSrc.getContext('2d');
+  // Redessiner la source en HD
+  if (srcImg) {
+    const scale = Math.max(SW/srcImg.width, SH/srcImg.height);
+    oCtx.drawImage(srcImg,(SW-srcImg.width*scale)/2,(SH-srcImg.height*scale)/2,srcImg.width*scale,srcImg.height*scale);
+  } else {
+    oCtx.drawImage(srcC,0,0,SW,SH);
+  }
+  const oDst = document.createElement('canvas'); oDst.width=SW; oDst.height=SH;
+  const odCtx = oDst.getContext('2d');
+  const s=strength/100, t=(performance.now()/1000)*speedMult;
+  const cx=SW/2, cy=SH/2;
+  // Effets canvas directs en HD
+  if (!comboOn||currentFx2==='none') {
+    if (applyCanvasFxTo(currentFx,s,t,cx,cy,oSrc,oDst,odCtx,SW,SH)) { dl(oDst); return; }
+  }
+  const srcData=oCtx.getImageData(0,0,SW,SH); let sd=srcData.data, mid=null;
+  if(comboOn&&currentFx2!=='none'){mid=new Uint8ClampedArray(SW*SH*4);for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){let[sx,sy]=warpHD(currentFx,x,y,s,t,cx,cy,SW,SH);sx=Math.max(0,Math.min(SW-1,Math.round(sx)));sy=Math.max(0,Math.min(SH-1,Math.round(sy)));const si=(sy*SW+sx)*4,di=(y*SW+x)*4;colorFxHD(currentFx,sd,mid,di,si,sx,sy,s,t,SW);} sd=mid;}
+  const dst=odCtx.createImageData(SW,SH); const dd=dst.data; const fx=(comboOn&&currentFx2!=='none')?currentFx2:currentFx;
+  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){let[sx,sy]=warpHD(fx,x,y,s,t,cx,cy,SW,SH);sx=Math.max(0,Math.min(SW-1,Math.round(sx)));sy=Math.max(0,Math.min(SH-1,Math.round(sy)));const si=(sy*SW+sx)*4,di=(y*SW+x)*4;colorFxHD(fx,sd,dd,di,si,sx,sy,s,t,SW);}
+  odCtx.putImageData(dst,0,0); dl(oDst);
+}
+
+function dl(c) {
+  const a=document.createElement('a'); a.download='miroir_deformant.png'; a.href=c.toDataURL('image/png'); a.click();
+}
+
+function applyCanvasFxTo(fx,s,t,cx,cy,srcCanvas,dstCanvas,ctx,W,H){
+  if(fx==='mirror4'){const hw=W/2,hh=H/2;ctx.clearRect(0,0,W,H);ctx.drawImage(srcCanvas,0,0,hw,hh,0,0,hw,hh);ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(srcCanvas,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(srcCanvas,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(W,H);ctx.scale(-1,-1);ctx.drawImage(srcCanvas,0,0,hw,hh,0,0,hw,hh);ctx.restore();return true;}
+  if(fx==='mirror_diag'){ctx.clearRect(0,0,W,H);ctx.drawImage(srcCanvas,0,0,W,H);ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,H);ctx.lineTo(W,0);ctx.closePath();ctx.clip();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(srcCanvas,0,0,W,H);ctx.restore();return true;}
+  if(fx==='kaleidoscope'){const segs=Math.max(4,Math.round(s*12)+4),ang=(Math.PI*2)/segs;ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(cx,cy);for(let i=0;i<segs;i++){ctx.save();ctx.rotate(ang*i);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,Math.max(W,H),0,ang);ctx.closePath();ctx.clip();if(i%2===0){ctx.drawImage(srcCanvas,-cx,-cy,W,H);}else{ctx.scale(-1,1);ctx.rotate(-ang);ctx.drawImage(srcCanvas,-cx,-cy,W,H);}ctx.restore();}ctx.restore();return true;}
+  return false;
+}
+
+function warpHD(fx,x,y,s,t,cx,cy,W,H){let sx=x,sy=y;const nx=(x-cx)/cx,ny=(y-cy)/cy,r=Math.sqrt(nx*nx+ny*ny);
+  if(fx==='wave'){sx=x+Math.sin((y/H)*Math.PI*6+t*2)*s*50*(W/RW);sy=y+Math.sin((x/W)*Math.PI*6+t*2)*s*40*(H/RH);}
+  else if(fx==='lateral'){sx=x+Math.sin((y/H)*Math.PI*2)*s*cx*.85;}
+  else if(fx==='bulge'){const f=r<1?1/(1-r*r*s*.9+.01):1;sx=cx+nx*cx*f*(1-s*.5);sy=cy+ny*cy*f*(1-s*.5);}
+  else if(fx==='funnel'){const sc=Math.max(.05,1-s*(y/H)*.85);sx=cx+(x-cx)/sc;}
+  else if(fx==='swirl'){const a=r*s*Math.PI*2;sx=cx+(nx*Math.cos(a)-ny*Math.sin(a))*cx;sy=cy+(nx*Math.sin(a)+ny*Math.cos(a))*cy;}
+  else if(fx==='fisheye'){const th=Math.atan2(ny,nx),rn=r<1?Math.pow(r,1+s*1.5):r;sx=cx+Math.cos(th)*rn*cx;sy=cy+Math.sin(th)*rn*cy;}
+  else if(fx==='spiral'){const a2=r*s*Math.PI*3+t,pull=1-s*.5*r;sx=cx+(nx*Math.cos(a2)-ny*Math.sin(a2))*cx*pull;sy=cy+(nx*Math.sin(a2)+ny*Math.cos(a2))*cy*pull;}
+  else if(fx==='liquid'){sx=x+Math.sin(y*.05+t*1.5)*s*30*(W/RW)+Math.sin(y*.12+t)*s*15*(W/RW);sy=y+Math.cos(x*.05+t*1.2)*s*30*(H/RH)+Math.cos(x*.12+t*.8)*s*15*(H/RH);}
+  else if(fx==='shake'){sx=x+Math.sin(t*20+y*.1)*s*20*(W/RW)+(Math.random()-.5)*s*8;sy=y+Math.cos(t*17+x*.1)*s*15*(H/RH)+(Math.random()-.5)*s*8;}
+  else if(fx==='zoom_pulse'){const p=1+Math.sin(t*3)*s*.5;sx=cx+(x-cx)/p;sy=cy+(y-cy)/p;}
+  else if(fx==='vortex'){const pull=Math.max(0,1-r*s*1.2),a3=pull*Math.PI*2;sx=cx+(nx*Math.cos(a3)-ny*Math.sin(a3))*cx;sy=cy+(nx*Math.sin(a3)+ny*Math.cos(a3))*cy;}
+  else if(fx==='radial'){const w2=Math.sin(r*10-t*3)*s*20,th2=Math.atan2(ny,nx);sx=x+Math.cos(th2)*w2;sy=y+Math.sin(th2)*w2;}
+  else if(fx==='fun'){sx=x+Math.sin(y*.08+t)*s*40*(W/RW);sy=y+Math.cos(x*.08+t)*s*40*(H/RH)*(y<H/2?1:-1);}
+  return[sx,sy];
+}
+
+function colorFxHD(fx,sd,dd,di,si,sx,sy,s,t,W){
+  if(fx==='thermal'){const b=(sd[si]*.299+sd[si+1]*.587+sd[si+2]*.114)/255;const[r,g,bv]=hslToRgb((1-b)*.67,1,.5);dd[di]=r;dd[di+1]=g;dd[di+2]=bv;dd[di+3]=255;}
+  else if(fx==='vintage'){const rv=sd[si]*.393+sd[si+1]*.769+sd[si+2]*.189,gv=sd[si]*.349+sd[si+1]*.686+sd[si+2]*.168,bv=sd[si]*.272+sd[si+1]*.534+sd[si+2]*.131,mix=1-s*.5;dd[di]=Math.min(255,rv*(1-mix)+sd[si]*mix);dd[di+1]=Math.min(255,gv*(1-mix)+sd[si+1]*mix);dd[di+2]=Math.min(255,bv*(1-mix)+sd[si+2]*mix);dd[di+3]=255;}
+  else if(fx==='neon'){const lum=(sd[si]+sd[si+1]+sd[si+2])/3,edge=(lum>80&&lum<200)?1:0;const[r,g,b]=hslToRgb((t*50%360)/360,1,.5);dd[di]=edge?r:sd[si]*.2;dd[di+1]=edge?g:sd[si+1]*.2;dd[di+2]=edge?b:sd[si+2]*.2;dd[di+3]=255;}
+  else if(fx==='psychedelic'){const[h,sat,l]=rgbToHsl(sd[si],sd[si+1],sd[si+2]);const[r,g,b]=hslToRgb((h+t*.1*s+.5)%1,Math.min(1,sat+s*.5),l);dd[di]=r;dd[di+1]=g;dd[di+2]=b;dd[di+3]=255;}
+  else if(fx==='negative'){const p=(Math.sin(t*3)+1)/2*s;dd[di]=sd[si]+(255-2*sd[si])*p;dd[di+1]=sd[si+1]+(255-2*sd[si+1])*p;dd[di+2]=sd[si+2]+(255-2*sd[si+2])*p;dd[di+3]=255;}
+  else if(fx==='prism'){const shift=Math.round(s*60),lx=Math.max(0,Math.min(W-1,sx-shift)),rx=Math.max(0,Math.min(W-1,sx+shift));dd[di]=sd[(sy*W+lx)*4];dd[di+1]=sd[si+1];dd[di+2]=sd[(sy*W+rx)*4+2];dd[di+3]=255;}
+  else{dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=sd[si+3];}
+}
 
 function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;}}return[h,s,l];}
 function hslToRgb(h,s,l){if(s===0){const v=Math.round(l*255);return[v,v,v];}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};return[Math.round(f(p,q,h+1/3)*255),Math.round(f(p,q,h)*255),Math.round(f(p,q,h-1/3)*255)];}
@@ -374,7 +575,9 @@ function applyEffect(){
   ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.font='bold 80px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('😀',W/2-80,H/2);ctx.fillText('🎭',W/2+80,H/2-20);
   ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='18px sans-serif';ctx.fillText('Chargez votre image →',W/2,H-28);
-  sCtx.drawImage(c,0,0);srcImg=c;applyEffect();loopInterval=setInterval(applyEffect,50);
+  sCtx.drawImage(c,0,0);srcImg=c;
+  function renderLoop(){ applyEffect(); loopInterval=requestAnimationFrame(renderLoop); }
+  renderLoop();
 })();
 </script>
 </body>
