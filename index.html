@@ -36,7 +36,7 @@
   #recStatus { font-size: 12px; color: #f90; }
 
   /* Overlay plein écran */
-  #fs-overlay { display: none; position: fixed; z-index: 9999; bottom: 24px; right: 24px; flex-direction: column; gap: 12px; align-items: flex-end; }
+  #fs-overlay { display: none; position: absolute; z-index: 9999; bottom: 24px; right: 24px; flex-direction: column; gap: 12px; align-items: flex-end; }
   #fs-overlay.visible { display: flex; }
   .fs-btn { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: transform .15s; }
   .fs-btn:hover { transform: scale(1.1); }
@@ -45,9 +45,7 @@
   #fs-rec.rec { animation: blink 1s infinite; }
   #fs-style { background: rgba(83,58,183,0.85); }
   #fs-close { background: rgba(60,60,80,0.85); font-size: 18px; }
-
-  /* Panneau effets plein écran */
-  #fs-panel { display: none; position: fixed; z-index: 9998; bottom: 0; left: 0; right: 0;
+  #fs-panel { display: none; position: absolute; z-index: 9998; bottom: 0; left: 0; right: 0;
     background: rgba(20,20,40,0.95); backdrop-filter: blur(12px);
     padding: 20px 16px 32px; border-top: 1px solid #444;
     flex-direction: column; gap: 14px; align-items: center;
@@ -65,6 +63,8 @@
 <body>
 <h1>🪞 Miroir Déformant</h1>
 
+<!-- Wrapper plein écran -->
+<div id="fs-wrapper" style="position:relative;display:inline-block;">
 <div id="canvases">
   <div class="canvas-wrap"><label>Original</label><canvas id="src" width="960" height="540"></canvas></div>
   <div class="canvas-wrap"><label>Miroir déformant</label><canvas id="dst" width="960" height="540"></canvas></div>
@@ -119,6 +119,7 @@
     <span class="val" id="fs-speedOut">1.0x</span>
   </div>
   <span id="fs-panel-close">✕ Fermer</span>
+</div>
 </div>
 
 <div id="controls">
@@ -288,8 +289,11 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('stopBtn').style.display='inline-block';
       document.getElementById('camStatus').textContent='🟢 Caméra active';
       document.getElementById('fs-panel').classList.remove('open');
-      // Masquer les contrôles pendant la lecture
-      document.getElementById('controls').style.display='none';
+      // Masquer toute l'interface pendant la lecture
+      ['controls','combo-row','slider-row','cam-row','action-row'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.style.display='none';
+      });
+      document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='none');
       document.getElementById('fs-overlay').style.pointerEvents='none';
       document.getElementById('fs-overlay').style.opacity='0';
       camLoop();
@@ -311,8 +315,8 @@ function stopCam() {
   document.getElementById('camBtn').style.display='inline-block';
   document.getElementById('snapBtn').style.display='none';
   document.getElementById('stopBtn').style.display='none';
-  // Restaurer interface
-  document.getElementById('controls').style.display='';
+  // Restaurer toute l'interface
+  document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='');
   document.getElementById('fs-overlay').style.pointerEvents='';
   document.getElementById('fs-overlay').style.opacity='';
   // Restaurer la taille CSS des canvas (fix iPad)
@@ -329,22 +333,33 @@ function camLoop() {
 
 // Plein écran
 document.getElementById('fullBtn').addEventListener('click', () => {
-  const el = document.documentElement;
+  const el = document.getElementById('fs-wrapper');
   if (el.requestFullscreen) el.requestFullscreen();
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
 });
 
 function onFsChange() {
   const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const wrapper = document.getElementById('fs-wrapper');
   document.getElementById('fs-overlay').classList.toggle('visible', isFs);
   if (isFs) {
-    dstC.style.position='fixed'; dstC.style.top='0'; dstC.style.left='0';
+    wrapper.style.width='100vw'; wrapper.style.height='100vh';
+    wrapper.style.background='#000'; wrapper.style.display='flex';
+    wrapper.style.alignItems='center'; wrapper.style.justifyContent='center';
     dstC.style.width='100vw'; dstC.style.height='100vh'; dstC.style.objectFit='contain';
-    dstC.style.zIndex='9990'; dstC.style.borderRadius='0';
+    dstC.style.borderRadius='0';
+    document.getElementById('canvases').style.display='none';
+    // Afficher seulement le canvas dst en plein écran
+    dstC.style.display='block'; dstC.style.position='absolute';
+    dstC.style.top='0'; dstC.style.left='0';
   } else {
-    dstC.style.position=''; dstC.style.top=''; dstC.style.left='';
+    wrapper.style.width=''; wrapper.style.height='';
+    wrapper.style.background=''; wrapper.style.display='';
+    wrapper.style.alignItems=''; wrapper.style.justifyContent='';
     dstC.style.width=''; dstC.style.height=''; dstC.style.objectFit='';
-    dstC.style.zIndex=''; dstC.style.borderRadius='';
+    dstC.style.borderRadius=''; dstC.style.display='';
+    dstC.style.position=''; dstC.style.top=''; dstC.style.left='';
+    document.getElementById('canvases').style.display='';
     document.getElementById('fs-panel').classList.remove('open');
     document.getElementById('canvases').style.flexDirection='row';
     document.getElementById('canvases').style.flexWrap='wrap';
