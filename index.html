@@ -119,7 +119,7 @@
   <input type="file" id="camInIOS" accept="image/*" capture="user">
   <button class="btn green" id="saveBtn">💾 Enregistrer photo</button>
   <button class="btn orange" id="fullBtn">⛶ Plein écran</button>
-  <button class="btn red" id="recBtn">⏺ Enregistrer GIF</button>
+  <button class="btn red" id="recBtn">⏺ Enregistrer vidéo</button>
   <span id="recStatus"></span>
 </div>
 
@@ -136,6 +136,8 @@ let stream = null, video = null, animId = null;
 
 // Enregistrement : capture de frames PNG → ZIP téléchargeable
 let isRecording = false, recFrames = [], recTimer = null;
+let mediaRecorder = null, recChunks = [];
+const canCapture = typeof dstC.captureStream === 'function';
 
 // Matrix
 const matrixC = document.createElement('canvas'); matrixC.width=W; matrixC.height=H;
@@ -233,30 +235,56 @@ document.addEventListener('fullscreenchange', () => {
 // Compatible tous navigateurs y compris Safari/iOS
 document.getElementById('recBtn').addEventListener('click', () => {
   if (!isRecording) {
-    recFrames = []; isRecording = true;
+    isRecording = true;
     document.getElementById('recBtn').textContent = '⏹ Arrêter enreg.';
     document.getElementById('recBtn').classList.add('rec');
-    document.getElementById('recStatus').textContent = '⏺ 0 frames';
-    recTimer = setInterval(() => {
-      recFrames.push(dstC.toDataURL('image/jpeg', 0.85));
-      document.getElementById('recStatus').textContent = `⏺ ${recFrames.length} frames`;
-    }, 100);
-  } else {
-    clearInterval(recTimer); isRecording = false;
-    document.getElementById('recBtn').textContent = '⏺ Enregistrer GIF';
-    document.getElementById('recBtn').classList.remove('rec');
-    document.getElementById('recStatus').textContent = `✅ ${recFrames.length} photos — téléchargement...`;
-    // Télécharger chaque frame comme image (max 30)
-    const frames = recFrames.slice(0, 30);
-    frames.forEach((dataUrl, i) => {
-      setTimeout(() => {
+
+    if (canCapture) {
+      // PC : vraie vidéo WebM
+      recChunks = [];
+      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+      mediaRecorder = new MediaRecorder(dstC.captureStream(30), { mimeType: mime });
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recChunks, { type: 'video/webm' });
         const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `miroir_${String(i+1).padStart(3,'0')}.jpg`;
+        a.href = URL.createObjectURL(blob);
+        a.download = 'miroir_deformant.webm';
         a.click();
-      }, i * 300);
-    });
-    setTimeout(() => { document.getElementById('recStatus').textContent = ''; }, frames.length * 300 + 2000);
+        document.getElementById('recStatus').textContent = '';
+      };
+      mediaRecorder.start(100);
+      document.getElementById('recStatus').textContent = '⏺ Vidéo en cours...';
+    } else {
+      // iOS/Safari : frames JPEG
+      recFrames = [];
+      recTimer = setInterval(() => {
+        recFrames.push(dstC.toDataURL('image/jpeg', 0.85));
+        document.getElementById('recStatus').textContent = `⏺ ${recFrames.length} frames`;
+      }, 100);
+    }
+
+  } else {
+    isRecording = false;
+    document.getElementById('recBtn').textContent = '⏺ Enregistrer vidéo';
+    document.getElementById('recBtn').classList.remove('rec');
+
+    if (canCapture) {
+      mediaRecorder.stop();
+    } else {
+      clearInterval(recTimer);
+      document.getElementById('recStatus').textContent = `✅ ${recFrames.length} photos — téléchargement...`;
+      const frames = recFrames.slice(0, 30);
+      frames.forEach((dataUrl, i) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `miroir_${String(i+1).padStart(3,'0')}.jpg`;
+          a.click();
+        }, i * 300);
+      });
+      setTimeout(() => { document.getElementById('recStatus').textContent = ''; }, frames.length * 300 + 2000);
+    }
   }
 });
 
