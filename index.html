@@ -207,10 +207,9 @@ const dstC = document.getElementById('dst');
 const sCtx = srcC.getContext('2d');
 const dCtx = dstC.getContext('2d', { willReadFrequently: true });
 // Résolution affichage (fluide) vs sauvegarde (HD)
-const RW = 960, RH = 540;   // rendu temps réel
+const RW = 480, RH = 270;   // rendu temps réel — léger et fluide
 const SW = 1920, SH = 1080; // sauvegarde HD
-const W = RW, H = RH;       // alias utilisé par les effets
-// Redimensionner les canvas internes
+const W = RW, H = RH;
 srcC.width = RW; srcC.height = RH;
 dstC.width = RW; dstC.height = RH;
 let currentFx = 'wave', currentFx2 = 'none', comboOn = false;
@@ -288,6 +287,7 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('snapBtn').style.display='inline-block';
       document.getElementById('stopBtn').style.display='inline-block';
       document.getElementById('camStatus').textContent='🟢 Caméra active';
+      document.getElementById('fs-panel').classList.remove('open');
       camLoop();
     };
   } catch(e) { document.getElementById('camStatus').textContent='❌ Non disponible — utilise Photo iOS/Chromebook'; }
@@ -307,6 +307,11 @@ function stopCam() {
   document.getElementById('camBtn').style.display='inline-block';
   document.getElementById('snapBtn').style.display='none';
   document.getElementById('stopBtn').style.display='none';
+  // Restaurer la taille CSS des canvas (fix iPad)
+  srcC.style.width=''; srcC.style.height='';
+  dstC.style.width=''; dstC.style.height='';
+  document.getElementById('canvases').style.flexDirection='row';
+  document.getElementById('canvases').style.flexWrap='wrap';
 }
 function camLoop() {
   if (!stream) return;
@@ -392,6 +397,7 @@ document.getElementById('fs-speed').addEventListener('input', e => {
 // Enregistrement : photos séquentielles → télécharge des PNG numérotés
 // Compatible tous navigateurs y compris Safari/iOS
 document.getElementById('recBtn').addEventListener('click', () => {
+  document.getElementById('fs-panel').classList.remove('open');
   if (!isRecording) {
     isRecording = true;
     document.getElementById('recBtn').textContent = '⏹ Arrêter enreg.';
