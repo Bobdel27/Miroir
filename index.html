@@ -225,7 +225,7 @@ srcC.width = RW; srcC.height = RH;
 dstC.width = RW; dstC.height = RH;
 let currentFx = 'wave', currentFx2 = 'none', comboOn = false;
 let strength = 50, speedMult = 1;
-let srcImg = null, loopInterval = null;
+let srcImg = null, loopInterval = null, frozenImageData = null;
 let stream = null, video = null, animId = null;
 
 // Enregistrement : capture de frames PNG → ZIP téléchargeable
@@ -262,17 +262,27 @@ document.getElementById('speed').addEventListener('input', e => {
   speedMult = +e.target.value / 100; document.getElementById('speedOut').textContent = speedMult.toFixed(1)+'x';
 });
 
+function stopLoop() {
+  clearInterval(loopInterval);
+  cancelAnimationFrame(loopInterval);
+  loopInterval = null;
+}
+
+function startLoop() {
+  stopLoop();
+  function renderLoop() { applyEffect(); loopInterval = requestAnimationFrame(renderLoop); }
+  renderLoop();
+}
+
 function loadFromFile(file) {
   if (!file) return; stopCam();
   const img = new Image();
   img.onload = () => {
-    srcImg = img; sCtx.clearRect(0,0,W,H);
+    srcImg = img;
+    sCtx.clearRect(0,0,W,H);
     const scale = Math.max(W/img.width, H/img.height);
     sCtx.drawImage(img,(W-img.width*scale)/2,(H-img.height*scale)/2,img.width*scale,img.height*scale);
-    clearInterval(loopInterval); cancelAnimationFrame(loopInterval);
-    applyEffect();
-    function renderLoop(){ applyEffect(); loopInterval=requestAnimationFrame(renderLoop); }
-    renderLoop();
+    startLoop();
     document.getElementById('saveBtn').style.display='inline-block';
   };
   img.src = URL.createObjectURL(file);
@@ -281,7 +291,7 @@ document.getElementById('fileIn').addEventListener('change', e => loadFromFile(e
 document.getElementById('camInIOS').addEventListener('change', e => loadFromFile(e.target.files[0]));
 
 document.getElementById('camBtn').addEventListener('click', async () => {
-  clearInterval(loopInterval); srcImg = null;
+  stopLoop(); srcImg = null;
   document.getElementById('camStatus').textContent = 'Connexion...';
   try {
     stream = await navigator.mediaDevices.getUserMedia({video:{width:W,height:H,facingMode:'user'}});
@@ -292,26 +302,31 @@ document.getElementById('camBtn').addEventListener('click', async () => {
     video.controls = false;
     video.play();
     video.onloadedmetadata = () => {
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
       document.getElementById('camBtn').style.display='none';
       document.getElementById('snapBtn').style.display='inline-block';
       document.getElementById('stopBtn').style.display='inline-block';
       document.getElementById('camStatus').textContent='🟢 Caméra active';
       document.getElementById('fs-panel').classList.remove('open');
-      // Masquer toute l'interface pendant la lecture
-      ['controls','combo-row','slider-row','cam-row','action-row'].forEach(id => {
-        const el = document.getElementById(id); if(el) el.style.display='none';
-      });
-      document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='none');
-      document.getElementById('fs-overlay').style.pointerEvents='none';
-      document.getElementById('fs-overlay').style.opacity='0';
+      if (!isFs) {
+        // Masquer toute l'interface seulement si pas en plein écran
+        document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='none');
+        document.getElementById('fs-overlay').style.pointerEvents='none';
+        document.getElementById('fs-overlay').style.opacity='0';
+      }
       camLoop();
     };
   } catch(e) { document.getElementById('camStatus').textContent='❌ Non disponible — utilise Photo iOS/Chromebook'; }
 });
 document.getElementById('snapBtn').addEventListener('click', () => {
-  const frozen = sCtx.getImageData(0,0,W,H); stopCam();
-  sCtx.putImageData(frozen,0,0); srcImg=srcC; applyEffect();
-  loopInterval=requestAnimationFrame(function loop(){ applyEffect(); loopInterval=requestAnimationFrame(loop); });
+  const frozen = sCtx.getImageData(0,0,W,H);
+  stopCam();
+  sCtx.putImageData(frozen,0,0);
+  // Garder srcImg=null pour que saveHD utilise srcC directement
+  // et stocker les données frozen pour la sauvegarde HD
+  srcImg = null;
+  frozenImageData = frozen;
+  startLoop();
   document.getElementById('camStatus').textContent='📷 Photo prise';
   document.getElementById('saveBtn').style.display='inline-block';
 });
@@ -323,15 +338,17 @@ function stopCam() {
   document.getElementById('camBtn').style.display='inline-block';
   document.getElementById('snapBtn').style.display='none';
   document.getElementById('stopBtn').style.display='none';
-  // Restaurer toute l'interface
-  document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='');
-  document.getElementById('fs-overlay').style.pointerEvents='';
-  document.getElementById('fs-overlay').style.opacity='';
-  // Restaurer la taille CSS des canvas (fix iPad)
-  srcC.style.width=''; srcC.style.height='';
-  dstC.style.width=''; dstC.style.height='';
-  document.getElementById('canvases').style.flexDirection='row';
-  document.getElementById('canvases').style.flexWrap='wrap';
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (!isFs) {
+    // Restaurer toute l'interface seulement si pas en plein écran
+    document.querySelectorAll('.row, #controls, h1').forEach(el => el.style.display='');
+    document.getElementById('fs-overlay').style.pointerEvents='';
+    document.getElementById('fs-overlay').style.opacity='';
+    srcC.style.width=''; srcC.style.height='';
+    dstC.style.width=''; dstC.style.height='';
+    document.getElementById('canvases').style.flexDirection='row';
+    document.getElementById('canvases').style.flexWrap='wrap';
+  }
 }
 function camLoop() {
   if (!stream) return;
@@ -480,14 +497,19 @@ document.getElementById('saveBtn').addEventListener('click', () => { saveHD(); }
 document.getElementById('fs-snap').addEventListener('click', () => { saveHD(); });
 
 function saveHD() {
-  // Recalcul en 1920×1080 sur canvas offscreen
   const oSrc = document.createElement('canvas'); oSrc.width=SW; oSrc.height=SH;
   const oCtx = oSrc.getContext('2d');
-  // Redessiner la source en HD
-  if (srcImg) {
+  if (srcImg && srcImg !== srcC) {
+    // Image chargée depuis fichier — mise à l'échelle HD
     const scale = Math.max(SW/srcImg.width, SH/srcImg.height);
     oCtx.drawImage(srcImg,(SW-srcImg.width*scale)/2,(SH-srcImg.height*scale)/2,srcImg.width*scale,srcImg.height*scale);
+  } else if (frozenImageData) {
+    // Photo prise depuis cam — upscale depuis les données figées
+    const tmpC = document.createElement('canvas'); tmpC.width=W; tmpC.height=H;
+    tmpC.getContext('2d').putImageData(frozenImageData,0,0);
+    oCtx.drawImage(tmpC,0,0,SW,SH);
   } else {
+    // Démo ou fallback
     oCtx.drawImage(srcC,0,0,SW,SH);
   }
   const oDst = document.createElement('canvas'); oDst.width=SW; oDst.height=SH;
@@ -559,8 +581,6 @@ function applyCanvasFx(fx,s,t,cx,cy){
   if(fx==='mirror_h'){dCtx.clearRect(0,0,W,H);dCtx.drawImage(srcC,0,0,W,H/2);dCtx.save();dCtx.translate(0,H);dCtx.scale(1,-1);dCtx.drawImage(srcC,0,0,W,H/2);dCtx.restore();return true;}
   if(fx==='tunnel'){const steps=Math.round(s*12)+4;dCtx.clearRect(0,0,W,H);for(let i=steps;i>=0;i--){const scale=1-i/steps*.9,ox=(W-(W*scale))/2,oy=(H-(H*scale))/2;dCtx.drawImage(srcC,ox,oy,W*scale,H*scale);}return true;}
   if(fx==='crystal'){const size=Math.round(s*40)+10;dCtx.clearRect(0,0,W,H);for(let y=0;y<H;y+=size)for(let x=0;x<W;x+=size){const cx2=x+size/2,cy2=y+size/2;dCtx.save();dCtx.beginPath();if(Math.random()>.5){dCtx.moveTo(x,y);dCtx.lineTo(x+size,y);dCtx.lineTo(cx2,cy2);}else{dCtx.moveTo(x+size,y);dCtx.lineTo(x+size,y+size);dCtx.lineTo(cx2,cy2);}dCtx.closePath();dCtx.clip();dCtx.drawImage(srcC,0,0,W,H);dCtx.restore();}return true;}
-  if(fx==='explode'){const cols=8,rows=6,tw=W/cols,th=H/rows;dCtx.clearRect(0,0,W,H);for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){const a=Math.atan2(row-rows/2,col-cols/2),d=s*30;dCtx.drawImage(srcC,col*tw,row*th,tw,th,col*tw+Math.cos(a)*d,row*th+Math.sin(a)*d,tw,th);}return true;}
-  if(fx==='ascii'){const ch=' .:-=+*#%@',fs=Math.max(6,Math.round(16-s*10));dCtx.fillStyle='#000';dCtx.fillRect(0,0,W,H);dCtx.font=`${fs}px monospace`;for(let y=0;y<H;y+=fs)for(let x=0;x<W;x+=fs*.6){const d=sCtx.getImageData(x|0,y|0,1,1).data,b=(d[0]*.299+d[1]*.587+d[2]*.114)/255;dCtx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;dCtx.fillText(ch[Math.floor(b*(ch.length-1))],x,y+fs);}return true;}
   return false;
 }
 
@@ -609,9 +629,8 @@ function applyEffect(){
   ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.font='bold 80px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('😀',W/2-80,H/2);ctx.fillText('🎭',W/2+80,H/2-20);
   ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='18px sans-serif';ctx.fillText('Chargez votre image →',W/2,H-28);
-  sCtx.drawImage(c,0,0);srcImg=c;
-  function renderLoop(){ applyEffect(); loopInterval=requestAnimationFrame(renderLoop); }
-  renderLoop();
+  sCtx.drawImage(c,0,0); srcImg=c;
+  startLoop();
 })();
 </script>
 </body>
