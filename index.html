@@ -288,6 +288,10 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('stopBtn').style.display='inline-block';
       document.getElementById('camStatus').textContent='🟢 Caméra active';
       document.getElementById('fs-panel').classList.remove('open');
+      // Masquer les contrôles pendant la lecture
+      document.getElementById('controls').style.display='none';
+      document.getElementById('fs-overlay').style.pointerEvents='none';
+      document.getElementById('fs-overlay').style.opacity='0';
       camLoop();
     };
   } catch(e) { document.getElementById('camStatus').textContent='❌ Non disponible — utilise Photo iOS/Chromebook'; }
@@ -307,6 +311,10 @@ function stopCam() {
   document.getElementById('camBtn').style.display='inline-block';
   document.getElementById('snapBtn').style.display='none';
   document.getElementById('stopBtn').style.display='none';
+  // Restaurer interface
+  document.getElementById('controls').style.display='';
+  document.getElementById('fs-overlay').style.pointerEvents='';
+  document.getElementById('fs-overlay').style.opacity='';
   // Restaurer la taille CSS des canvas (fix iPad)
   srcC.style.width=''; srcC.style.height='';
   dstC.style.width=''; dstC.style.height='';
