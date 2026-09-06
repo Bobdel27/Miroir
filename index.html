@@ -359,6 +359,12 @@ function onFsChange() {
     dstC.style.borderRadius = '0';
     dstC.style.zIndex = '9980';
     dstC.style.background = '#000';
+    document.body.style.overflow = 'hidden';
+    // Cacher tout sauf dstC
+    document.querySelectorAll('body > *:not(#fs-overlay):not(#fs-panel)').forEach(el => {
+      if (el !== dstC) el.style.visibility = 'hidden';
+    });
+    dstC.style.visibility = 'visible';
   } else {
     dstC.style.position = '';
     dstC.style.top = '';
@@ -370,6 +376,8 @@ function onFsChange() {
     dstC.style.borderRadius = '';
     dstC.style.zIndex = '';
     dstC.style.background = '';
+    document.body.style.overflow = '';
+    document.querySelectorAll('body > *').forEach(el => el.style.visibility = '');
     document.getElementById('fs-panel').classList.remove('open');
   }
 }
