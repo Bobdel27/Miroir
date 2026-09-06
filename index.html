@@ -301,10 +301,13 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('snapBtn').style.display = 'inline-block';
       document.getElementById('stopBtn').style.display = 'inline-block';
       document.getElementById('camStatus').textContent = '🟢 Camera active';
-      // Agrandir les canvas en mode cam
-      srcC.style.width = '640px';
-      dstC.style.width = '640px';
+      srcC.style.width = '650px';
+      dstC.style.width = '650px';
       camLoop();
+      // Plein ecran automatique
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     };
   } catch(e) {
     document.getElementById('camStatus').textContent = '❌ Non disponible — utilise Photo iOS/Chromebook';
@@ -332,9 +335,13 @@ function stopCam() {
   document.getElementById('camBtn').style.display = 'inline-block';
   document.getElementById('snapBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
-  // Remettre taille normale
   srcC.style.width = '';
   dstC.style.width = '';
+  // Quitter le plein ecran si actif
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
 }
 
 function camLoop() {
