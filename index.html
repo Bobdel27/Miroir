@@ -71,6 +71,7 @@
   <div id="fs-panel-effects">
     <button class="fs-effect active" data-fx="wave">🌊 Vague</button>
     <button class="fs-effect" data-fx="lateral">↔️ Lateral</button>
+    <button class="fs-effect" data-fx="horizontal">↕️ Horizontal</button>
     <button class="fs-effect" data-fx="bulge">🫧 Bosse</button>
     <button class="fs-effect" data-fx="funnel">🔻 Entonnoir</button>
     <button class="fs-effect" data-fx="swirl">🌀 Tourbillon</button>
@@ -106,7 +107,7 @@
     <input type="range" id="fs-strength" min="1" max="100" value="50">
     <span class="val" id="fs-strengthOut">50</span>
     <label>Vitesse</label>
-    <input type="range" id="fs-speed" min="1" max="200" value="100">
+    <input type="range" id="fs-speed" min="10" max="500" value="100">
     <span class="val" id="fs-speedOut">1.0x</span>
   </div>
   <span id="fs-panel-close">✕ Fermer</span>
@@ -115,6 +116,7 @@
 <div id="controls">
   <button class="effect active" data-fx="wave">🌊 Vague</button>
   <button class="effect" data-fx="lateral">↔️ Lateral</button>
+  <button class="effect" data-fx="horizontal">↕️ Horizontal</button>
   <button class="effect" data-fx="bulge">🫧 Bosse</button>
   <button class="effect" data-fx="funnel">🔻 Entonnoir</button>
   <button class="effect" data-fx="swirl">🌀 Tourbillon</button>
@@ -179,7 +181,7 @@
   <input type="range" id="strength" min="1" max="100" value="50">
   <span class="val" id="strengthOut">50</span>
   <label>Vitesse</label>
-  <input type="range" id="speed" min="1" max="200" value="100">
+  <input type="range" id="speed" min="10" max="500" value="100">
   <span class="val" id="speedOut">1.0x</span>
 </div>
 
@@ -484,7 +486,7 @@ function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
   if(fx==='pixel'){const bs=Math.round(s*30)+4;ctx.clearRect(0,0,W,H);const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;tmp.getContext('2d').drawImage(sc,0,0,W,H);const tCtx=tmp.getContext('2d');for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=tCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;ctx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;ctx.fillRect(x,y,bs,bs);}return true;}
   if(fx==='glitch'){ctx.drawImage(sc,0,0,W,H);const n=Math.round(s*18)+3;for(let i=0;i<n;i++){const gy=Math.random()*H,gh=Math.random()*20+2,gx=(Math.random()-.5)*s*80;ctx.drawImage(sc,0,gy,W,gh,gx,gy,W,gh);}return true;}
   if(fx==='mosaic'){const ts=Math.round(s*20)+8;ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=(Math.random()-.5)*s*40,oy=(Math.random()-.5)*s*40;ctx.drawImage(sc,x,y,ts,ts,x+ox,y+oy,ts,ts);}return true;}
-  if(fx==='tunnel'){const steps=Math.round(s*12)+4;ctx.clearRect(0,0,W,H);for(let i=steps;i>=0;i--){const sc2=1-i/steps*.9,ox=(W-(W*sc2))/2,oy=(H-(H*sc2))/2;ctx.drawImage(sc,ox,oy,W*sc2,H*sc2);}return true;}
+  if(fx==='tunnel'){const steps=Math.round(s*12)+4;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);for(let i=0;i<=steps;i++){const sc2=1-(i/steps)*0.9,ox=(W-(W*sc2))/2,oy=(H-(H*sc2))/2;ctx.drawImage(sc,0,0,W,H,ox,oy,W*sc2,H*sc2);}return true;}
   if(fx==='crystal'){const size=Math.round(s*40)+10;ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=size)for(let x=0;x<W;x+=size){const cx2=x+size/2,cy2=y+size/2;ctx.save();ctx.beginPath();if(Math.random()>.5){ctx.moveTo(x,y);ctx.lineTo(x+size,y);ctx.lineTo(cx2,cy2);}else{ctx.moveTo(x+size,y);ctx.lineTo(x+size,y+size);ctx.lineTo(cx2,cy2);}ctx.closePath();ctx.clip();ctx.drawImage(sc,0,0,W,H);ctx.restore();}return true;}
   return false;
 }
@@ -497,6 +499,7 @@ function warpXY(fx,x,y,s,t,cx,cy,W,H){
   const nx=(x-cx)/cx,ny=(y-cy)/cy,r=Math.sqrt(nx*nx+ny*ny);
   if(fx==='wave'){sx=x+Math.sin((y/H)*Math.PI*6+t*2)*s*50;sy=y+Math.sin((x/W)*Math.PI*6+t*2)*s*40;}
   else if(fx==='lateral'){sx=x+Math.sin((y/H)*Math.PI*2)*s*cx*.85;}
+  else if(fx==='horizontal'){sy=y+Math.sin((x/W)*Math.PI*2)*s*cy*.85;}
   else if(fx==='bulge'){const f=r<1?1/(1-r*r*s*.9+.01):1;sx=cx+nx*cx*f*(1-s*.5);sy=cy+ny*cy*f*(1-s*.5);}
   else if(fx==='funnel'){const sc=Math.max(.05,1-s*(y/H)*.85);sx=cx+(x-cx)/sc;}
   else if(fx==='swirl'){const a=r*s*Math.PI*2;sx=cx+(nx*Math.cos(a)-ny*Math.sin(a))*cx;sy=cy+(nx*Math.sin(a)+ny*Math.cos(a))*cy;}
