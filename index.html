@@ -579,7 +579,7 @@ function colorFxPx(fx,sd,dd,di,si,sx,sy,s,t,W){
   else if(fx==='prism'){const sh=Math.round(s*30),lx=Math.max(0,Math.min(W-1,sx-sh)),rx=Math.max(0,Math.min(W-1,sx+sh));dd[di]=sd[(sy*W+lx)*4];dd[di+1]=sd[si+1];dd[di+2]=sd[(sy*W+rx)*4+2];dd[di+3]=255;}
   else if(fx==='halo'){const lum=(sd[si]+sd[si+1]+sd[si+2])/3,pulse=(Math.sin(t*3)+1)/2,glow=lum>120?Math.min(255,lum+s*100*pulse):lum*.3;const[r,g,b]=hslToRgb((t*30%360)/360,1,.5);dd[di]=Math.min(255,sd[si]+glow*r/255*s*150);dd[di+1]=Math.min(255,sd[si+1]+glow*g/255*s*150);dd[di+2]=Math.min(255,sd[si+2]+glow*b/255*s*150);dd[di+3]=255;}
   else if(fx==='sepia'){const pulse=(Math.sin(t*2)+1)/2*s,rv=sd[si]*.393+sd[si+1]*.769+sd[si+2]*.189,gv=sd[si]*.349+sd[si+1]*.686+sd[si+2]*.168,bv=sd[si]*.272+sd[si+1]*.534+sd[si+2]*.131;dd[di]=Math.min(255,rv*pulse+sd[si]*(1-pulse));dd[di+1]=Math.min(255,gv*pulse+sd[si+1]*(1-pulse));dd[di+2]=Math.min(255,bv*pulse+sd[si+2]*(1-pulse));dd[di+3]=255;}
-  else{dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=sd[si+3];}
+  else{dd[di]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4];dd[di+1]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+1];dd[di+2]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+2];dd[di+3]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+3];}
 }
 
 // --- Apply effect ---
