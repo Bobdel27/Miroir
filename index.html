@@ -588,19 +588,51 @@ function applyEffect() {
   if (!comboOn||currentFx2==='none') {
     if (applyCanvasFx(currentFx,s,t,cx,cy)) return;
   }
-  const srcData=sCtx.getImageData(0,0,W,H); let sd=srcData.data, mid=null;
-  if (comboOn&&currentFx2!=='none') {
-    mid = new Uint8ClampedArray(W*H*4);
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
-      let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,W,H);
-      sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
-      const di=(y*W+x)*4, si=(sy*W+sx)*4;
-      colorFxPx(currentFx,sd,mid,di,si,sx,sy,s,t,W);
-    }
-    sd=mid;
-  }
   const dst=dCtx.createImageData(W,H); const dd=dst.data;
   const fx=(comboOn&&currentFx2!=='none')?currentFx2:currentFx;
+
+  if (comboOn&&currentFx2!=='none') {
+    // Appliquer fx1 dans un canvas temporaire
+    const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    const tCtx=tmp.getContext('2d');
+    // Si fx1 est canvas direct
+    if(applyCanvasFxTo(currentFx,s,t,cx,cy,srcC,tCtx,W,H)) {
+      // fx2 sur le résultat
+      if(applyCanvasFxTo(fx,s,t,cx,cy,tmp,dCtx,W,H)) return;
+      const tData=tCtx.getImageData(0,0,W,H); const tsd=tData.data;
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+        let[sx,sy]=warpXY(fx,x,y,s,t,cx,cy,W,H);
+        sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
+        const di=(y*W+x)*4, si=(sy*W+sx)*4;
+        colorFxPx(fx,tsd,dd,di,si,sx,sy,s,t,W);
+      }
+    } else {
+      // fx1 pixel, résultat dans tmp
+      const mid2=new Uint8ClampedArray(W*H*4);
+      const sd2=sCtx.getImageData(0,0,W,H).data;
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+        let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,W,H);
+        sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
+        const di=(y*W+x)*4, si=(sy*W+sx)*4;
+        colorFxPx(currentFx,sd2,mid2,di,si,sx,sy,s,t,W);
+      }
+      // Mettre mid2 dans tmp pour fx2 canvas
+      const midImg=new ImageData(mid2,W,H); tCtx.putImageData(midImg,0,0);
+      if(applyCanvasFxTo(fx,s,t,cx,cy,tmp,dCtx,W,H)) return;
+      // fx2 pixel sur mid2
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+        let[sx,sy]=warpXY(fx,x,y,s,t,cx,cy,W,H);
+        sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
+        const di=(y*W+x)*4, si=(sy*W+sx)*4;
+        colorFxPx(fx,mid2,dd,di,si,sx,sy,s,t,W);
+      }
+    }
+    dCtx.putImageData(dst,0,0);
+    return;
+  }
+
+  // Pas de combo — effet simple pixel
+  const sd=sCtx.getImageData(0,0,W,H).data;
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
     let[sx,sy]=warpXY(fx,x,y,s,t,cx,cy,W,H);
     sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
