@@ -594,7 +594,8 @@ function applyEffect() {
     for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
       let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,W,H);
       sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
-      colorFxPx(currentFx,sd,mid,(y*W+x)*4,(sy*W+sx)*4,sx,sy,s,t,W);
+      const di=(y*W+x)*4, si=(sy*W+sx)*4;
+      colorFxPx(currentFx,sd,mid,di,si,sx,sy,s,t,W);
     }
     sd=mid;
   }
@@ -603,7 +604,8 @@ function applyEffect() {
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
     let[sx,sy]=warpXY(fx,x,y,s,t,cx,cy,W,H);
     sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
-    colorFxPx(fx,sd,dd,(y*W+x)*4,(sy*W+sx)*4,sx,sy,s,t,W);
+    const di=(y*W+x)*4, si=(sy*W+sx)*4;
+    colorFxPx(fx,sd,dd,di,si,sx,sy,s,t,W);
   }
   dCtx.putImageData(dst,0,0);
 }
