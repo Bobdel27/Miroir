@@ -161,13 +161,56 @@
     <option value="fisheye">👁️ Fisheye</option>
     <option value="spiral">🌪️ Spirale</option>
     <option value="liquid">💧 Liquide</option>
+    <option value="shake">📳 Tremblement</option>
+    <option value="zoom_pulse">🔭 Zoom pulsant</option>
+    <option value="vortex">🕳️ Vortex</option>
+    <option value="radial">⭕ Radial</option>
+    <option value="fun">🎭 Fun</option>
+    <option value="mirror4">🔲 Miroir x4</option>
+    <option value="mirror_diag">🔀 Diagonal</option>
+    <option value="mirror_h">↕️ Miroir H</option>
+    <option value="kaleidoscope">💠 Kaleidoscope</option>
     <option value="prism">🌈 Prisme</option>
     <option value="thermal">🌡️ Thermique</option>
+    <option value="vintage">📷 Vintage</option>
     <option value="neon">✨ Neon</option>
     <option value="psychedelic">🎨 Psychedelique</option>
     <option value="negative">🔄 Negatif</option>
     <option value="glitch">⚡ Glitch</option>
+    <option value="pixel">🟦 Pixelise</option>
+    <option value="mosaic">🧩 Mosaique</option>
+    <option value="tunnel">🕳️ Tunnel</option>
+    <option value="crystal">💎 Cristal</option>
+    <option value="halo">🔆 Halo</option>
+    <option value="sepia">🟤 Sepia</option>
+    <option value="zoom_region">🔎 Zoom region</option>
   </select>
+  <button class="btn" id="infoBtn" title="Mode d'emploi">ℹ️</button>
+</div>
+
+<!-- Modal mode d'emploi -->
+<div id="infoModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#1e1e3a;border:1px solid #444;border-radius:16px;padding:28px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;color:#eee;font-size:14px;line-height:1.7;">
+    <h2 style="font-size:18px;margin-bottom:16px;color:#7F77DD">🪞 Mode d'emploi — Miroir Déformant</h2>
+    <p><b>🖼️ Charger une image</b> — Ouvre une photo depuis ton appareil.</p>
+    <p><b>📱 Photo iOS/Chromebook</b> — Prend une photo avec l'appareil photo natif (recommandé sur iPad/iPhone/Chromebook).</p>
+    <p><b>📷 Activer caméra</b> — Active la webcam en temps réel (nécessite HTTPS ou localhost).</p>
+    <p><b>📸 Prendre photo</b> — Fige l'image de la caméra pour travailler dessus.</p>
+    <p><b>⏹ Arrêter</b> — Coupe la caméra.</p>
+    <br>
+    <p><b>Effets</b> — Clique sur un bouton pour changer l'effet appliqué à l'image.</p>
+    <p><b>Intensité</b> — Règle la force de la déformation.</p>
+    <p><b>Vitesse</b> — Règle la rapidité de l'animation.</p>
+    <p><b>🔀 Combiner 2 effets</b> — Active le mode combo puis choisis un 2e effet dans la liste déroulante. Les deux effets s'appliquent l'un après l'autre.</p>
+    <br>
+    <p><b>💾 Sauvegarder</b> — Télécharge l'image déformée en HD 1920×1080.</p>
+    <p><b>⛶ Plein écran</b> — Affiche le miroir déformant en plein écran avec des boutons flottants.</p>
+    <p><b>⏺ Enregistrer vidéo</b> — Enregistre l'animation en .webm (PC/Android uniquement).</p>
+    <br>
+    <p style="font-size:12px;color:#888"><b>En plein écran :</b> 📸 sauvegarder · ⏺ vidéo · 🎨 changer effet · ✕ quitter</p>
+    <br>
+    <button onclick="document.getElementById('infoModal').style.display='none'" style="padding:10px 24px;background:#533ab7;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">✕ Fermer</button>
+  </div>
 </div>
 
 <div class="row">
@@ -233,6 +276,13 @@ document.querySelectorAll('.fs-effect').forEach(b => {
 });
 
 // --- Combo ---
+document.getElementById('infoBtn').addEventListener('click', () => {
+  document.getElementById('infoModal').style.display = 'flex';
+});
+document.getElementById('infoModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('infoModal'))
+    document.getElementById('infoModal').style.display = 'none';
+});
 document.getElementById('combo-toggle').addEventListener('click', () => {
   comboOn = !comboOn;
   document.getElementById('combo-toggle').classList.toggle('active', comboOn);
