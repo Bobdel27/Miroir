@@ -301,13 +301,12 @@ document.getElementById('camBtn').addEventListener('click', async () => {
       document.getElementById('snapBtn').style.display = 'inline-block';
       document.getElementById('stopBtn').style.display = 'inline-block';
       document.getElementById('camStatus').textContent = '🟢 Camera active';
-      // Canvas dst prend toute la largeur
-      document.getElementById('canvases').style.flexDirection = 'column';
-      srcC.style.width = '100%';
-      srcC.style.maxWidth = '100%';
-      dstC.style.width = '100%';
-      dstC.style.maxWidth = '100%';
+      srcC.style.width = '650px';
+      dstC.style.width = '650px';
       camLoop();
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     };
   } catch(e) {
     document.getElementById('camStatus').textContent = '❌ Non disponible — utilise Photo iOS/Chromebook';
@@ -335,11 +334,8 @@ function stopCam() {
   document.getElementById('camBtn').style.display = 'inline-block';
   document.getElementById('snapBtn').style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
-  document.getElementById('canvases').style.flexDirection = '';
   srcC.style.width = '';
-  srcC.style.maxWidth = '';
   dstC.style.width = '';
-  dstC.style.maxWidth = '';
   if (document.fullscreenElement || document.webkitFullscreenElement) {
     if (document.exitFullscreen) document.exitFullscreen();
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -370,7 +366,7 @@ function onFsChange() {
     dstC.style.width = '100vw';
     dstC.style.height = '100vh';
     dstC.style.maxWidth = 'none';
-    dstC.style.objectFit = 'contain';
+    dstC.style.objectFit = 'fill';
     dstC.style.borderRadius = '0';
     dstC.style.zIndex = '9980';
     dstC.style.background = '#000';
