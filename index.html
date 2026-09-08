@@ -594,7 +594,8 @@ function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.m
 function hslToRgb(h,s,l){if(s===0){const v=Math.round(l*255);return[v,v,v];}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};return[Math.round(f(p,q,h+1/3)*255),Math.round(f(p,q,h)*255),Math.round(f(p,q,h-1/3)*255)];}
 
 // --- Effets canvas directs ---
-function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
+function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H,r) {
+  r = r !== undefined ? r : radius;
   if(fx==='mirror4'){const hw=W/2,hh=H/2;ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(W,H);ctx.scale(-1,-1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();return true;}
   if(fx==='mirror_diag'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H);ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,H);ctx.lineTo(W,0);ctx.closePath();ctx.clip();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(sc,0,0,W,H);ctx.restore();return true;}
   if(fx==='mirror_h'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H/2);ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(sc,0,0,W,H/2);ctx.restore();return true;}
@@ -608,7 +609,6 @@ function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
     const tCtx=tmp.getContext('2d');tCtx.drawImage(sc,0,0,W,H);
     const imgData=tCtx.getImageData(0,0,W,H);
     const d=imgData.data, out=ctx.createImageData(W,H), od=out.data;
-    const r=radius; // rayon contrôlé par le curseur
 
     for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
       const di=(y*W+x)*4;
