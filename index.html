@@ -116,6 +116,9 @@
     <label>Vitesse</label>
     <input type="range" id="fs-speed" min="10" max="500" value="100">
     <span class="val" id="fs-speedOut">1.0x</span>
+    <label>Rayon</label>
+    <input type="range" id="fs-radius" min="1" max="30" value="5">
+    <span class="val" id="fs-radiusOut">5</span>
   </div>
   <span id="fs-panel-close">✕ Fermer</span>
 </div>
@@ -169,16 +172,15 @@
     <p><b>🖼️ Charger une image</b> — Ouvre une photo depuis ton appareil.</p>
     <p><b>📱 Photo iOS/Chromebook</b> — Prend une photo avec l'appareil photo natif (recommandé sur iPad/iPhone/Chromebook).</p>
     <p><b>📷 Activer caméra</b> — Active la webcam en temps réel (nécessite HTTPS ou localhost).</p>
-    <p><b>📸 Prendre photo</b> — Fige l'image de la caméra pour travailler dessus.</p>
+    <p><b>📸 Prendre photo</b> — Fige l'image de la caméra. Tu peux aussi cliquer directement sur le miroir.</p>
     <p><b>⏹ Arrêter</b> — Coupe la caméra.</p>
     <br>
     <p><b>Effets</b> — Clique sur un bouton pour changer l'effet appliqué à l'image.</p>
     <p><b>Intensité</b> — Règle la force de la déformation.</p>
-    <p><b>Vitesse</b> — Règle la rapidité de l'animation.</p>
-    <p><b>⏱ Minuterie</b> — Choisir 3, 5 ou 10 secondes avant la prise de photo automatique.</p>
-    <p><b>📂 Historique</b> — Les 5 dernières photos apparaissent en bas, cliquer pour télécharger.</p>
-    <p><b>🔀 Combiner 2 effets</b> — Active le mode combo puis choisis un 2e effet dans la liste déroulante. Les deux effets s'appliquent l'un après l'autre.</p>
+    <p><b>Vitesse</b> — Règle la rapidité de l'animation (effets animés uniquement).</p>
+    <p><b>Rayon</b> — Taille du voisinage pour les effets artistiques : Huile, Aquarelle, Cartoon, Emboss, Pixel, Mosaïque, Vitrail.</p>
     <br>
+    <p><b>📂 Historique</b> — Les 5 dernières photos apparaissent en bas. Cliquer pour télécharger en HD 1920×1080.</p>
     <p><b>💾 Sauvegarder</b> — Télécharge l'image déformée en HD 1920×1080.</p>
     <p><b>⛶ Plein écran</b> — Affiche le miroir déformant en plein écran avec des boutons flottants.</p>
     <p><b>⏺ Enregistrer vidéo</b> — Enregistre l'animation en .webm (PC/Android uniquement).</p>
@@ -200,19 +202,15 @@
   <label>Vitesse</label>
   <input type="range" id="speed" min="10" max="500" value="100">
   <span class="val" id="speedOut">1.0x</span>
+  <label>Rayon</label>
+  <input type="range" id="radius" min="1" max="30" value="5">
+  <span class="val" id="radiusOut">5</span>
 </div>
 
 <div class="row">
   <button class="btn purple" id="camBtn">📷 Activer camera</button>
   <button class="btn green" id="snapBtn" style="display:none">📸 Prendre photo</button>
   <button class="btn red" id="stopBtn" style="display:none">⏹ Arreter</button>
-  <select id="timerSelect" class="btn" style="cursor:pointer">
-    <option value="0">⏱ Minuterie</option>
-    <option value="3">3 secondes</option>
-    <option value="5">5 secondes</option>
-    <option value="10">10 secondes</option>
-  </select>
-  <span id="timerStatus" style="font-size:20px;font-weight:bold;color:#7F77DD;min-width:32px;text-align:center"></span>
   <span id="camStatus"></span>
 </div>
 
@@ -242,8 +240,8 @@ const dCtx = dstC.getContext('2d', { willReadFrequently: true });
 const W = 480, H = 360;
 const SW = 1920, SH = 1080;
 let currentFx = 'wave';
-let strength = 50, speedMult = 1;
-let timerDelay = 0, timerInterval = null;
+let strength = 50, speedMult = 1, radius = 5;
+let timerInterval = null;
 const histoMax = 5, histoItems = [];
 let srcImg = null, loopInterval = null, frozenData = null;
 let stream = null, video = null, animId = null;
@@ -304,34 +302,26 @@ document.getElementById('fs-speed').addEventListener('input', e => {
   document.getElementById('speed').value = e.target.value;
   document.getElementById('speedOut').textContent = speedMult.toFixed(1)+'x';
 });
+document.getElementById('radius').addEventListener('input', e => {
+  radius = +e.target.value;
+  document.getElementById('radiusOut').textContent = radius;
+  document.getElementById('fs-radius').value = radius;
+  document.getElementById('fs-radiusOut').textContent = radius;
+});
+document.getElementById('fs-radius').addEventListener('input', e => {
+  radius = +e.target.value;
+  document.getElementById('fs-radiusOut').textContent = radius;
+  document.getElementById('radius').value = radius;
+  document.getElementById('radiusOut').textContent = radius;
+});
 
 // Clic sur le canvas dst = prendre photo
 dstC.style.cursor = 'pointer';
 dstC.title = 'Cliquer pour prendre une photo';
 dstC.addEventListener('click', () => {
-  if (!srcImg && !frozenData && !stream) return; // rien à capturer
-  takePhotoWithTimer();
+  if (!srcImg && !frozenData && !stream) return;
+  doSnap();
 });
-document.getElementById('timerSelect').addEventListener('change', e => {
-  timerDelay = +e.target.value;
-});
-
-function takePhotoWithTimer() {
-  if (timerDelay === 0) { doSnap(); return; }
-  let count = timerDelay;
-  document.getElementById('timerStatus').textContent = count;
-  timerInterval = setInterval(() => {
-    count--;
-    if (count > 0) {
-      document.getElementById('timerStatus').textContent = count;
-    } else {
-      clearInterval(timerInterval); timerInterval = null;
-      document.getElementById('timerStatus').textContent = '📸';
-      setTimeout(() => { document.getElementById('timerStatus').textContent = ''; }, 800);
-      doSnap();
-    }
-  }, 1000);
-}
 
 function doSnap() {
   frozenData = sCtx.getImageData(0,0,W,H);
@@ -449,7 +439,7 @@ document.getElementById('camBtn').addEventListener('click', async () => {
   }
 });
 
-document.getElementById('snapBtn').addEventListener('click', takePhotoWithTimer);
+document.getElementById('snapBtn').addEventListener('click', doSnap);
 
 document.getElementById('stopBtn').addEventListener('click', () => {
   stopCam();
@@ -609,16 +599,16 @@ function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
   if(fx==='mirror_diag'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H);ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,H);ctx.lineTo(W,0);ctx.closePath();ctx.clip();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(sc,0,0,W,H);ctx.restore();return true;}
   if(fx==='mirror_h'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H/2);ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(sc,0,0,W,H/2);ctx.restore();return true;}
   if(fx==='kaleidoscope'){const segs=Math.max(4,Math.round(s*12)+4),ang=(Math.PI*2)/segs;ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(cx,cy);for(let i=0;i<segs;i++){ctx.save();ctx.rotate(ang*i);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,Math.max(W,H),0,ang);ctx.closePath();ctx.clip();if(i%2===0){ctx.drawImage(sc,-cx,-cy,W,H);}else{ctx.scale(-1,1);ctx.rotate(-ang);ctx.drawImage(sc,-cx,-cy,W,H);}ctx.restore();}ctx.restore();return true;}
-  if(fx==='pixel'){const bs=Math.round(s*30)+4;ctx.clearRect(0,0,W,H);const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;tmp.getContext('2d').drawImage(sc,0,0,W,H);const tCtx=tmp.getContext('2d');for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=tCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;ctx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;ctx.fillRect(x,y,bs,bs);}return true;}
+  if(fx==='pixel'){const bs=Math.max(2,radius*2);ctx.clearRect(0,0,W,H);const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;tmp.getContext('2d').drawImage(sc,0,0,W,H);const tCtx=tmp.getContext('2d');for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=tCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;ctx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;ctx.fillRect(x,y,bs,bs);}return true;}
   if(fx==='glitch'){ctx.drawImage(sc,0,0,W,H);const n=Math.round(s*18)+3;for(let i=0;i<n;i++){const gy=Math.random()*H,gh=Math.random()*20+2,gx=(Math.random()-.5)*s*80;ctx.drawImage(sc,0,gy,W,gh,gx,gy,W,gh);}return true;}
-  if(fx==='mosaic'){const ts=Math.round(s*20)+8;ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=(Math.random()-.5)*s*40,oy=(Math.random()-.5)*s*40;ctx.drawImage(sc,x,y,ts,ts,x+ox,y+oy,ts,ts);}return true;}
+  if(fx==='mosaic'){const ts=Math.max(4,radius*2);ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=(Math.random()-.5)*s*40,oy=(Math.random()-.5)*s*40;ctx.drawImage(sc,x,y,ts,ts,x+ox,y+oy,ts,ts);}return true;}
   if(fx==='tunnel'){const steps=Math.round(s*12)+4;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);for(let i=0;i<=steps;i++){const sc2=1-(i/steps)*0.9,ox=(W-(W*sc2))/2,oy=(H-(H*sc2))/2;ctx.drawImage(sc,0,0,W,H,ox,oy,W*sc2,H*sc2);}return true;}
   if(fx==='oilpaint'||fx==='watercolor'||fx==='cartoon'||fx==='emboss'||fx==='stained') {
     const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;
     const tCtx=tmp.getContext('2d');tCtx.drawImage(sc,0,0,W,H);
     const imgData=tCtx.getImageData(0,0,W,H);
     const d=imgData.data, out=ctx.createImageData(W,H), od=out.data;
-    const r=Math.max(1,Math.round(s*4)+1); // rayon réduit pour fluidité
+    const r=radius; // rayon contrôlé par le curseur
 
     for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
       const di=(y*W+x)*4;
