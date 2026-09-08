@@ -11,8 +11,6 @@
   #canvases { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
   .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .canvas-wrap label { font-size: 13px; color: #aaa; }
-  #dst { cursor: pointer; }
-  #dst:hover { border-color: #7F77DD; box-shadow: 0 0 8px rgba(127,119,221,0.4); }
   canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 480px; max-width: 100%; height: auto; }
   #controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 960px; }
   button.effect { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
@@ -57,7 +55,7 @@
 
 <div id="canvases">
   <div class="canvas-wrap"><label>Original</label><canvas id="src" width="480" height="360"></canvas></div>
-  <div class="canvas-wrap"><label>Miroir déformant — cliquer pour photo</label><canvas id="dst" width="480" height="360"></canvas></div>
+  <div class="canvas-wrap"><label>Miroir déformant</label><canvas id="dst" width="480" height="360"></canvas></div>
 </div>
 
 <!-- Overlay boutons plein ecran -->
@@ -315,13 +313,7 @@ document.getElementById('fs-radius').addEventListener('input', e => {
   document.getElementById('radiusOut').textContent = radius;
 });
 
-// Clic sur le canvas dst = prendre photo
-dstC.style.cursor = 'pointer';
-dstC.title = 'Cliquer pour prendre une photo';
-dstC.addEventListener('click', () => {
-  if (!srcImg && !frozenData && !stream) return;
-  doSnap();
-});
+// Clic sur le canvas dst = prendre photo supprimé
 
 function doSnap() {
   frozenData = sCtx.getImageData(0,0,W,H);
