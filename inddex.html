@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miroir Déformant</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; gap: 18px; }
+  h1 { font-size: 22px; font-weight: 500; }
+  #canvases { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .canvas-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .canvas-wrap label { font-size: 13px; color: #aaa; }
+  #dst { cursor: pointer; }
+  #dst:hover { border-color: #7F77DD; box-shadow: 0 0 8px rgba(127,119,221,0.4); }
+  canvas { border-radius: 14px; border: 1px solid #333; display: block; width: 480px; max-width: 100%; height: auto; }
+  #controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 960px; }
+  button.effect { padding: 7px 13px; font-size: 12px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; }
+  button.effect:hover { background: #0f3460; color: #fff; }
+  button.effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .row label { font-size: 13px; color: #aaa; }
+  input[type=range] { width: 160px; accent-color: #7F77DD; }
+  .val { font-size: 14px; font-weight: 500; min-width: 32px; }
+  .btn { padding: 9px 18px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; transition: all .15s; display: inline-block; text-align: center; }
+  .btn:hover { background: #0f3460; color: #fff; }
+  .btn.green { background: #0f6e56; color: #fff; border-color: #1D9E75; }
+  .btn.red { background: #993c1d; color: #fff; border-color: #D85A30; }
+  .btn.purple { background: #533ab7; color: #fff; border-color: #7F77DD; }
+  .btn.orange { background: #7a4e00; color: #fff; border-color: #c97d00; }
+  .btn.rec { background: #8b0000 !important; color: #fff !important; border-color: #ff4444 !important; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  input[type=file] { display: none; }
+  #camStatus { font-size: 12px; color: #aaa; }
+  #recStatus { font-size: 12px; color: #f90; }
+  #recInfo { font-size: 11px; color: #666; }
+  /* Overlay plein ecran */
+  #fs-overlay { display: none; position: fixed; z-index: 9999; bottom: 24px; right: 24px; flex-direction: column; gap: 12px; align-items: flex-end; }
+  #fs-overlay.visible { display: flex; }
+  .fs-btn { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: transform .15s; background: rgba(40,40,80,0.85); color:#fff; }
+  .fs-btn:hover { transform: scale(1.1); }
+  #fs-rec.rec { animation: blink 1s infinite; }
+  /* Panneau effets plein ecran */
+  #fs-panel { display: none; position: fixed; z-index: 9998; bottom: 0; left: 0; right: 0; background: rgba(20,20,40,0.96); backdrop-filter: blur(12px); padding: 20px 16px 32px; border-top: 1px solid #444; flex-direction: column; gap: 14px; align-items: center; transition: transform .3s ease; }
+  #fs-panel.open { display: flex; }
+  #fs-panel-effects { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 800px; }
+  .fs-effect { padding: 8px 14px; font-size: 13px; border-radius: 8px; border: 1px solid #444; background: #16213e; color: #ccc; cursor: pointer; }
+  .fs-effect.active { background: #533ab7; color: #fff; border-color: #7F77DD; }
+  #fs-panel-sliders { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  #fs-panel-sliders label { font-size: 13px; color: #aaa; }
+  #fs-panel-sliders input[type=range] { width: 130px; accent-color: #7F77DD; }
+  #fs-panel-close { font-size: 13px; color: #888; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>🪞 Miroir Déformant</h1>
+
+<div id="canvases">
+  <div class="canvas-wrap"><label>Original</label><canvas id="src" width="480" height="360"></canvas></div>
+  <div class="canvas-wrap"><label>Miroir déformant — cliquer pour photo</label><canvas id="dst" width="480" height="360"></canvas></div>
+</div>
+
+<!-- Overlay boutons plein ecran -->
+<div id="fs-overlay">
+  <button class="fs-btn" id="fs-snap" title="Sauvegarder photo">📸</button>
+  <button class="fs-btn" id="fs-rec" title="Enregistrer video">⏺</button>
+  <button class="fs-btn" id="fs-style" title="Changer effet">🎨</button>
+  <button class="fs-btn" id="fs-close" title="Quitter plein ecran">✕</button>
+</div>
+
+<!-- Panneau effets plein ecran -->
+<div id="fs-panel">
+  <div id="fs-panel-effects">
+    <button class="fs-effect active" data-fx="wave">🌊 Vague</button>
+    <button class="fs-effect" data-fx="lateral">↔️ Lateral</button>
+    <button class="fs-effect" data-fx="horizontal">↕️ Horizontal</button>
+    <button class="fs-effect" data-fx="bulge">🫧 Bosse</button>
+    <button class="fs-effect" data-fx="funnel">🔻 Entonnoir</button>
+    <button class="fs-effect" data-fx="swirl">🌀 Tourbillon</button>
+    <button class="fs-effect" data-fx="fisheye">👁️ Fisheye</button>
+    <button class="fs-effect" data-fx="spiral">🌪️ Spirale</button>
+    <button class="fs-effect" data-fx="liquid">💧 Liquide</button>
+    <button class="fs-effect" data-fx="shake">📳 Tremblement</button>
+    <button class="fs-effect" data-fx="zoom_pulse">🔭 Zoom</button>
+    <button class="fs-effect" data-fx="vortex">🕳️ Vortex</button>
+    <button class="fs-effect" data-fx="radial">⭕ Radial</button>
+    <button class="fs-effect" data-fx="fun">🎭 Fun</button>
+    <button class="fs-effect" data-fx="mirror4">🔲 Miroir x4</button>
+    <button class="fs-effect" data-fx="mirror_diag">🔀 Diagonal</button>
+    <button class="fs-effect" data-fx="kaleidoscope">💠 Kaleidoscope</button>
+    <button class="fs-effect" data-fx="prism">🌈 Prisme</button>
+    <button class="fs-effect" data-fx="thermal">🌡️ Thermique</button>
+    <button class="fs-effect" data-fx="vintage">📷 Vintage</button>
+    <button class="fs-effect" data-fx="neon">✨ Neon</button>
+    <button class="fs-effect" data-fx="psychedelic">🎨 Psychedelique</button>
+    <button class="fs-effect" data-fx="negative">🔄 Negatif</button>
+    <button class="fs-effect" data-fx="glitch">⚡ Glitch</button>
+    <button class="fs-effect" data-fx="pixel">🟦 Pixelise</button>
+    <button class="fs-effect" data-fx="mosaic">🧩 Mosaique</button>
+    <button class="fs-effect" data-fx="mirror_h">↕️ Miroir H</button>
+    <button class="fs-effect" data-fx="tunnel">🕳️ Tunnel</button>
+    <button class="fs-effect" data-fx="crystal">💎 Cristal</button>
+    <button class="fs-effect" data-fx="halo">🔆 Halo</button>
+    <button class="fs-effect" data-fx="sepia">🟤 Sepia</button>
+    <button class="fs-effect" data-fx="zoom_region">🔎 Zoom region</button>
+    <button class="fs-effect" data-fx="oilpaint">🖌️ Huile</button>
+    <button class="fs-effect" data-fx="watercolor">💦 Aquarelle</button>
+    <button class="fs-effect" data-fx="cartoon">🎭 Cartoon</button>
+    <button class="fs-effect" data-fx="emboss">🪨 Emboss</button>
+    <button class="fs-effect" data-fx="stained">🪟 Vitrail</button>
+  </div>
+  <div id="fs-panel-sliders">
+    <label>Intensite</label>
+    <input type="range" id="fs-strength" min="1" max="100" value="50">
+    <span class="val" id="fs-strengthOut">50</span>
+    <label>Vitesse</label>
+    <input type="range" id="fs-speed" min="10" max="500" value="100">
+    <span class="val" id="fs-speedOut">1.0x</span>
+  </div>
+  <span id="fs-panel-close">✕ Fermer</span>
+</div>
+
+<div id="controls">
+  <button class="effect active" data-fx="wave">🌊 Vague</button>
+  <button class="effect" data-fx="lateral">↔️ Lateral</button>
+  <button class="effect" data-fx="horizontal">↕️ Horizontal</button>
+  <button class="effect" data-fx="bulge">🫧 Bosse</button>
+  <button class="effect" data-fx="funnel">🔻 Entonnoir</button>
+  <button class="effect" data-fx="swirl">🌀 Tourbillon</button>
+  <button class="effect" data-fx="fisheye">👁️ Fisheye</button>
+  <button class="effect" data-fx="spiral">🌪️ Spirale</button>
+  <button class="effect" data-fx="liquid">💧 Liquide</button>
+  <button class="effect" data-fx="shake">📳 Tremblement</button>
+  <button class="effect" data-fx="zoom_pulse">🔭 Zoom pulsant</button>
+  <button class="effect" data-fx="vortex">🕳️ Vortex</button>
+  <button class="effect" data-fx="radial">⭕ Radial</button>
+  <button class="effect" data-fx="fun">🎭 Fun</button>
+  <button class="effect" data-fx="mirror4">🔲 Miroir x4</button>
+  <button class="effect" data-fx="mirror_diag">🔀 Diagonal</button>
+  <button class="effect" data-fx="kaleidoscope">💠 Kaleidoscope</button>
+  <button class="effect" data-fx="prism">🌈 Prisme</button>
+  <button class="effect" data-fx="thermal">🌡️ Thermique</button>
+  <button class="effect" data-fx="vintage">📷 Vintage</button>
+  <button class="effect" data-fx="neon">✨ Neon</button>
+  <button class="effect" data-fx="psychedelic">🎨 Psychedelique</button>
+  <button class="effect" data-fx="negative">🔄 Negatif</button>
+  <button class="effect" data-fx="glitch">⚡ Glitch</button>
+  <button class="effect" data-fx="pixel">🟦 Pixelise</button>
+  <button class="effect" data-fx="mosaic">🧩 Mosaique</button>
+  <button class="effect" data-fx="mirror_h">↕️ Miroir H</button>
+  <button class="effect" data-fx="tunnel">🕳️ Tunnel</button>
+  <button class="effect" data-fx="crystal">💎 Cristal</button>
+  <button class="effect" data-fx="halo">🔆 Halo</button>
+  <button class="effect" data-fx="sepia">🟤 Sepia</button>
+  <button class="effect" data-fx="zoom_region">🔎 Zoom region</button>
+  <button class="effect" data-fx="oilpaint">🖌️ Huile</button>
+  <button class="effect" data-fx="watercolor">💦 Aquarelle</button>
+  <button class="effect" data-fx="cartoon">🎭 Cartoon</button>
+  <button class="effect" data-fx="emboss">🪨 Emboss</button>
+  <button class="effect" data-fx="stained">🪟 Vitrail</button>
+</div>
+
+
+
+<!-- Modal mode d'emploi -->
+<div id="infoModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#1e1e3a;border:1px solid #444;border-radius:16px;padding:28px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;color:#eee;font-size:14px;line-height:1.7;">
+    <h2 style="font-size:18px;margin-bottom:16px;color:#7F77DD">🪞 Mode d'emploi — Miroir Déformant</h2>
+    <p><b>🖼️ Charger une image</b> — Ouvre une photo depuis ton appareil.</p>
+    <p><b>📱 Photo iOS/Chromebook</b> — Prend une photo avec l'appareil photo natif (recommandé sur iPad/iPhone/Chromebook).</p>
+    <p><b>📷 Activer caméra</b> — Active la webcam en temps réel (nécessite HTTPS ou localhost).</p>
+    <p><b>📸 Prendre photo</b> — Fige l'image de la caméra pour travailler dessus.</p>
+    <p><b>⏹ Arrêter</b> — Coupe la caméra.</p>
+    <br>
+    <p><b>Effets</b> — Clique sur un bouton pour changer l'effet appliqué à l'image.</p>
+    <p><b>Intensité</b> — Règle la force de la déformation.</p>
+    <p><b>Vitesse</b> — Règle la rapidité de l'animation.</p>
+    <p><b>⏱ Minuterie</b> — Choisir 3, 5 ou 10 secondes avant la prise de photo automatique.</p>
+    <p><b>📂 Historique</b> — Les 5 dernières photos apparaissent en bas, cliquer pour télécharger.</p>
+    <p><b>🔀 Combiner 2 effets</b> — Active le mode combo puis choisis un 2e effet dans la liste déroulante. Les deux effets s'appliquent l'un après l'autre.</p>
+    <br>
+    <p><b>💾 Sauvegarder</b> — Télécharge l'image déformée en HD 1920×1080.</p>
+    <p><b>⛶ Plein écran</b> — Affiche le miroir déformant en plein écran avec des boutons flottants.</p>
+    <p><b>⏺ Enregistrer vidéo</b> — Enregistre l'animation en .webm (PC/Android uniquement).</p>
+    <br>
+    <p style="font-size:12px;color:#888"><b>En plein écran :</b> 📸 sauvegarder · ⏺ vidéo · 🎨 changer effet · ✕ quitter</p>
+    <br>
+    <button onclick="document.getElementById('infoModal').style.display='none'" style="padding:10px 24px;background:#533ab7;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">✕ Fermer</button>
+  </div>
+</div>
+
+<div class="row">
+  <button class="btn" id="infoBtn" title="Mode d'emploi">ℹ️ Mode d'emploi</button>
+</div>
+
+<div class="row">
+  <label>Intensite</label>
+  <input type="range" id="strength" min="1" max="100" value="50">
+  <span class="val" id="strengthOut">50</span>
+  <label>Vitesse</label>
+  <input type="range" id="speed" min="10" max="500" value="100">
+  <span class="val" id="speedOut">1.0x</span>
+</div>
+
+<div class="row">
+  <button class="btn purple" id="camBtn">📷 Activer camera</button>
+  <button class="btn green" id="snapBtn" style="display:none">📸 Prendre photo</button>
+  <button class="btn red" id="stopBtn" style="display:none">⏹ Arreter</button>
+  <select id="timerSelect" class="btn" style="cursor:pointer">
+    <option value="0">⏱ Minuterie</option>
+    <option value="3">3 secondes</option>
+    <option value="5">5 secondes</option>
+    <option value="10">10 secondes</option>
+  </select>
+  <span id="timerStatus" style="font-size:20px;font-weight:bold;color:#7F77DD;min-width:32px;text-align:center"></span>
+  <span id="camStatus"></span>
+</div>
+
+<div class="row">
+  <label class="btn" for="fileIn">🖼️ Charger image</label>
+  <input type="file" id="fileIn" accept="image/*">
+  <label class="btn" for="camInIOS">📱 Photo iOS/Chromebook</label>
+  <input type="file" id="camInIOS" accept="image/*" capture="user">
+  <button class="btn green" id="saveBtn" style="display:none">💾 Sauvegarder</button>
+  <button class="btn orange" id="fullBtn">⛶ Plein ecran</button>
+  <button class="btn red" id="recBtn">⏺ Enregistrer video</button>
+  <span id="recStatus"></span>
+  <span id="recInfo"></span>
+</div>
+
+<!-- Historique -->
+<div id="histoRow" style="display:none;flex-direction:column;align-items:center;gap:8px;">
+  <label style="font-size:13px;color:#aaa;">📂 Historique (5 dernières photos)</label>
+  <div id="histoList" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;"></div>
+</div>
+
+<script>
+const srcC = document.getElementById('src');
+const dstC = document.getElementById('dst');
+const sCtx = srcC.getContext('2d');
+const dCtx = dstC.getContext('2d', { willReadFrequently: true });
+const W = 480, H = 360;
+const SW = 1920, SH = 1080;
+let currentFx = 'wave';
+let strength = 50, speedMult = 1;
+let timerDelay = 0, timerInterval = null;
+const histoMax = 5, histoItems = [];
+let srcImg = null, loopInterval = null, frozenData = null;
+let stream = null, video = null, animId = null;
+let mediaRecorder = null, recChunks = [], isRecording = false;
+const canCapture = typeof dstC.captureStream === 'function';
+
+// --- Boucle RAF propre ---
+function stopLoop() { cancelAnimationFrame(loopInterval); clearInterval(loopInterval); loopInterval = null; }
+function startLoop() { stopLoop(); function rl(){ applyEffect(); loopInterval = requestAnimationFrame(rl); } rl(); }
+
+// --- Effets ---
+document.querySelectorAll('.effect').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.effect,.fs-effect').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('[data-fx="'+b.dataset.fx+'"]').forEach(x => x.classList.add('active'));
+    currentFx = b.dataset.fx;
+  });
+});
+document.querySelectorAll('.fs-effect').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.effect,.fs-effect').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('[data-fx="'+b.dataset.fx+'"]').forEach(x => x.classList.add('active'));
+    currentFx = b.dataset.fx;
+  });
+});
+
+// --- Combo ---
+document.getElementById('infoBtn').addEventListener('click', () => {
+  document.getElementById('infoModal').style.display = 'flex';
+});
+document.getElementById('infoModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('infoModal'))
+    document.getElementById('infoModal').style.display = 'none';
+});
+
+// --- Sliders ---
+document.getElementById('strength').addEventListener('input', e => {
+  strength = +e.target.value;
+  document.getElementById('strengthOut').textContent = strength;
+  document.getElementById('fs-strength').value = strength;
+  document.getElementById('fs-strengthOut').textContent = strength;
+});
+document.getElementById('speed').addEventListener('input', e => {
+  speedMult = +e.target.value / 100;
+  document.getElementById('speedOut').textContent = speedMult.toFixed(1)+'x';
+  document.getElementById('fs-speed').value = e.target.value;
+  document.getElementById('fs-speedOut').textContent = speedMult.toFixed(1)+'x';
+});
+document.getElementById('fs-strength').addEventListener('input', e => {
+  strength = +e.target.value;
+  document.getElementById('fs-strengthOut').textContent = strength;
+  document.getElementById('strength').value = strength;
+  document.getElementById('strengthOut').textContent = strength;
+});
+document.getElementById('fs-speed').addEventListener('input', e => {
+  speedMult = +e.target.value / 100;
+  document.getElementById('fs-speedOut').textContent = speedMult.toFixed(1)+'x';
+  document.getElementById('speed').value = e.target.value;
+  document.getElementById('speedOut').textContent = speedMult.toFixed(1)+'x';
+});
+
+// Clic sur le canvas dst = prendre photo
+dstC.style.cursor = 'pointer';
+dstC.title = 'Cliquer pour prendre une photo';
+dstC.addEventListener('click', () => {
+  if (!srcImg && !frozenData && !stream) return; // rien à capturer
+  takePhotoWithTimer();
+});
+document.getElementById('timerSelect').addEventListener('change', e => {
+  timerDelay = +e.target.value;
+});
+
+function takePhotoWithTimer() {
+  if (timerDelay === 0) { doSnap(); return; }
+  let count = timerDelay;
+  document.getElementById('timerStatus').textContent = count;
+  timerInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      document.getElementById('timerStatus').textContent = count;
+    } else {
+      clearInterval(timerInterval); timerInterval = null;
+      document.getElementById('timerStatus').textContent = '📸';
+      setTimeout(() => { document.getElementById('timerStatus').textContent = ''; }, 800);
+      doSnap();
+    }
+  }, 1000);
+}
+
+function doSnap() {
+  frozenData = sCtx.getImageData(0,0,W,H);
+  srcImg = null;
+  stopCam();
+  sCtx.putImageData(frozenData,0,0);
+  startLoop();
+  document.getElementById('camStatus').textContent = '📷 Photo prise';
+  document.getElementById('saveBtn').style.display = 'inline-block';
+  addToHistory();
+}
+
+// --- Historique ---
+function addToHistory() {
+  // Miniature pour affichage
+  const thumb = document.createElement('canvas');
+  thumb.width = 240; thumb.height = 180;
+  thumb.getContext('2d').drawImage(dstC, 0, 0, 240, 180);
+  const thumbUrl = thumb.toDataURL('image/jpeg', 0.85);
+
+  // Version HD pour téléchargement
+  const hdC = document.createElement('canvas'); hdC.width=SW; hdC.height=SH;
+  const hdCtx = hdC.getContext('2d');
+  const oSrc = document.createElement('canvas'); oSrc.width=SW; oSrc.height=SH;
+  const oCtx = oSrc.getContext('2d');
+  if (srcImg) {
+    const sc = Math.max(SW/srcImg.width, SH/srcImg.height);
+    oCtx.drawImage(srcImg,(SW-srcImg.width*sc)/2,(SH-srcImg.height*sc)/2,srcImg.width*sc,srcImg.height*sc);
+  } else if (frozenData) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    tmp.getContext('2d').putImageData(frozenData,0,0);
+    oCtx.drawImage(tmp,0,0,SW,SH);
+  } else {
+    oCtx.drawImage(srcC,0,0,SW,SH);
+  }
+  const s=strength/100, t=(performance.now()/1000)*speedMult, cx=SW/2, cy=SH/2;
+  if (!applyCanvasFxTo(currentFx,s,t,cx,cy,oSrc,hdCtx,SW,SH)) {
+    const sd=oCtx.getImageData(0,0,SW,SH).data;
+    const dst=hdCtx.createImageData(SW,SH); const dd=dst.data;
+    for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) {
+      let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,SW,SH);
+      sx=Math.max(0,Math.min(SW-1,Math.round(sx))); sy=Math.max(0,Math.min(SH-1,Math.round(sy)));
+      const di=(y*SW+x)*4, si=(sy*SW+sx)*4;
+      colorFxPx(currentFx,sd,dd,di,si,sx,sy,s,t,SW);
+    }
+    hdCtx.putImageData(dst,0,0);
+  }
+  const hdUrl = hdC.toDataURL('image/png');
+
+  histoItems.unshift({ thumb: thumbUrl, hd: hdUrl });
+  if (histoItems.length > histoMax) histoItems.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('histoList');
+  list.innerHTML = '';
+  histoItems.forEach((item, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;cursor:pointer;border-radius:10px;overflow:hidden;border:1px solid #444;transition:border-color .15s;';
+    wrap.onmouseenter = () => wrap.style.borderColor = '#7F77DD';
+    wrap.onmouseleave = () => wrap.style.borderColor = '#444';
+    const img = document.createElement('img');
+    img.src = item.thumb; img.width = 240; img.height = 180;
+    img.style.display = 'block';
+    img.title = 'Cliquer pour télécharger en HD 1920×1080';
+    img.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.download = 'miroir_'+(i+1)+'.png';
+      a.href = item.hd; a.click();
+    });
+    wrap.appendChild(img);
+    list.appendChild(wrap);
+  });
+  document.getElementById('histoRow').style.display = histoItems.length ? 'flex' : 'none';
+}
+function loadFromFile(file) {
+  if (!file) return;
+  stopCam();
+  const img = new Image();
+  img.onload = () => {
+    srcImg = img; frozenData = null;
+    sCtx.clearRect(0,0,W,H);
+    const sc = Math.max(W/img.width, H/img.height);
+    sCtx.drawImage(img,(W-img.width*sc)/2,(H-img.height*sc)/2,img.width*sc,img.height*sc);
+    startLoop();
+    document.getElementById('saveBtn').style.display = 'inline-block';
+  };
+  img.src = URL.createObjectURL(file);
+}
+document.getElementById('fileIn').addEventListener('change', e => loadFromFile(e.target.files[0]));
+document.getElementById('camInIOS').addEventListener('change', e => loadFromFile(e.target.files[0]));
+
+// --- Camera ---
+document.getElementById('camBtn').addEventListener('click', async () => {
+  stopLoop(); srcImg = null; frozenData = null;
+  document.getElementById('camStatus').textContent = 'Connexion...';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{width:W,height:H,facingMode:'user'}});
+    video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline','');
+    video.setAttribute('disablepictureinpicture','');
+    video.controls = false;
+    video.play();
+    video.onloadedmetadata = () => {
+      document.getElementById('camBtn').style.display = 'none';
+      document.getElementById('snapBtn').style.display = 'inline-block';
+      document.getElementById('stopBtn').style.display = 'inline-block';
+      document.getElementById('camStatus').textContent = '🟢 Camera active';
+      camLoop();
+    };
+  } catch(e) {
+    document.getElementById('camStatus').textContent = '❌ Non disponible — utilise Photo iOS/Chromebook';
+  }
+});
+
+document.getElementById('snapBtn').addEventListener('click', takePhotoWithTimer);
+
+document.getElementById('stopBtn').addEventListener('click', () => {
+  stopCam();
+  document.getElementById('camStatus').textContent = '';
+});
+
+function stopCam() {
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if (animId) { cancelAnimationFrame(animId); animId=null; }
+  document.getElementById('camBtn').style.display = 'inline-block';
+  document.getElementById('snapBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+}
+
+function camLoop() {
+  if (!stream) return;
+  sCtx.drawImage(video,0,0,W,H);
+  applyEffect();
+  animId = requestAnimationFrame(camLoop);
+}
+
+// --- Plein ecran (approche originale qui fonctionnait) ---
+document.getElementById('fullBtn').addEventListener('click', () => {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+});
+
+function onFsChange() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  document.getElementById('fs-overlay').classList.toggle('visible', isFs);
+  if (isFs) {
+    dstC.style.position = 'fixed';
+    dstC.style.top = '0';
+    dstC.style.left = '0';
+    dstC.style.width = '100vw';
+    dstC.style.height = '100vh';
+    dstC.style.maxWidth = 'none';
+    dstC.style.objectFit = 'fill';
+    dstC.style.borderRadius = '0';
+    dstC.style.zIndex = '9980';
+    dstC.style.background = '#000';
+    document.body.style.overflow = 'hidden';
+    // Cacher tout sauf dstC
+    document.querySelectorAll('body > *:not(#fs-overlay):not(#fs-panel)').forEach(el => {
+      if (el !== dstC) el.style.visibility = 'hidden';
+    });
+    dstC.style.visibility = 'visible';
+  } else {
+    dstC.style.position = '';
+    dstC.style.top = '';
+    dstC.style.left = '';
+    dstC.style.width = '';
+    dstC.style.height = '';
+    dstC.style.maxWidth = '';
+    dstC.style.objectFit = '';
+    dstC.style.borderRadius = '';
+    dstC.style.zIndex = '';
+    dstC.style.background = '';
+    document.body.style.overflow = '';
+    document.querySelectorAll('body > *').forEach(el => el.style.visibility = '');
+    document.getElementById('fs-panel').classList.remove('open');
+  }
+}
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
+
+// Boutons overlay plein ecran
+document.getElementById('fs-snap').addEventListener('click', saveHD);
+document.getElementById('fs-rec').addEventListener('click', () => { document.getElementById('recBtn').click(); });
+document.getElementById('fs-style').addEventListener('click', () => {
+  document.getElementById('fs-panel').classList.toggle('open');
+});
+document.getElementById('fs-close').addEventListener('click', () => {
+  if (document.exitFullscreen) document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+});
+document.getElementById('fs-panel-close').addEventListener('click', () => {
+  document.getElementById('fs-panel').classList.remove('open');
+});
+
+// --- Enregistrement video ---
+window.addEventListener('load', () => {
+  if (!canCapture) {
+    document.getElementById('recBtn').style.display = 'none';
+    document.getElementById('recInfo').textContent = '⚠️ Video non disponible sur iOS — utilise 💾 Sauvegarder';
+  }
+});
+
+document.getElementById('recBtn').addEventListener('click', () => {
+  document.getElementById('fs-panel').classList.remove('open');
+  if (!isRecording) {
+    isRecording = true;
+    recChunks = [];
+    document.getElementById('recBtn').textContent = '⏹ Arreter video';
+    document.getElementById('recBtn').classList.add('rec');
+    document.getElementById('fs-rec').classList.add('rec');
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    mediaRecorder = new MediaRecorder(dstC.captureStream(30), {mimeType: mime});
+    mediaRecorder.ondataavailable = e => { if (e.data.size>0) recChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(recChunks,{type:'video/webm'}));
+      a.download = 'miroir.webm'; a.click();
+      document.getElementById('recStatus').textContent = '';
+    };
+    mediaRecorder.start(100);
+    document.getElementById('recStatus').textContent = '⏺ Enregistrement...';
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    document.getElementById('recBtn').textContent = '⏺ Enregistrer video';
+    document.getElementById('recBtn').classList.remove('rec');
+    document.getElementById('fs-rec').classList.remove('rec');
+  }
+});
+
+// --- Sauvegarde HD ---
+document.getElementById('saveBtn').addEventListener('click', () => { addToHistory(); saveHD(); });
+
+function saveHD() {
+  const oSrc = document.createElement('canvas'); oSrc.width=SW; oSrc.height=SH;
+  const oCtx = oSrc.getContext('2d');
+  if (srcImg) {
+    const sc = Math.max(SW/srcImg.width, SH/srcImg.height);
+    oCtx.drawImage(srcImg,(SW-srcImg.width*sc)/2,(SH-srcImg.height*sc)/2,srcImg.width*sc,srcImg.height*sc);
+  } else if (frozenData) {
+    const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    tmp.getContext('2d').putImageData(frozenData,0,0);
+    oCtx.drawImage(tmp,0,0,SW,SH);
+  } else {
+    oCtx.drawImage(srcC,0,0,SW,SH);
+  }
+  const oDst = document.createElement('canvas'); oDst.width=SW; oDst.height=SH;
+  const odCtx = oDst.getContext('2d');
+  const s=strength/100, t=(performance.now()/1000)*speedMult, cx=SW/2, cy=SH/2;
+  if (applyCanvasFxTo(currentFx,s,t,cx,cy,oSrc,odCtx,SW,SH)) { dlCanvas(oDst); return; }
+  const srcData=oCtx.getImageData(0,0,SW,SH); const sd=srcData.data;
+  const dst=odCtx.createImageData(SW,SH); const dd=dst.data;
+  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) {
+    let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,SW,SH);
+    sx=Math.max(0,Math.min(SW-1,Math.round(sx))); sy=Math.max(0,Math.min(SH-1,Math.round(sy)));
+    const di=(y*SW+x)*4, si=(sy*SW+sx)*4;
+    colorFxPx(currentFx,sd,dd,di,si,sx,sy,s,t,SW);
+  }
+  odCtx.putImageData(dst,0,0); dlCanvas(oDst);
+}
+function dlCanvas(c) { const a=document.createElement('a'); a.download='miroir.png'; a.href=c.toDataURL('image/png'); a.click(); }
+
+// --- HSL helpers ---
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=((g-b)/d+(g<b?6:0))/6;else if(mx===g)h=((b-r)/d+2)/6;else h=((r-g)/d+4)/6;}return[h,s,l];}
+function hslToRgb(h,s,l){if(s===0){const v=Math.round(l*255);return[v,v,v];}const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;const f=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};return[Math.round(f(p,q,h+1/3)*255),Math.round(f(p,q,h)*255),Math.round(f(p,q,h-1/3)*255)];}
+
+// --- Effets canvas directs ---
+function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
+  if(fx==='mirror4'){const hw=W/2,hh=H/2;ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();ctx.save();ctx.translate(W,H);ctx.scale(-1,-1);ctx.drawImage(sc,0,0,hw,hh,0,0,hw,hh);ctx.restore();return true;}
+  if(fx==='mirror_diag'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H);ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,H);ctx.lineTo(W,0);ctx.closePath();ctx.clip();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(sc,0,0,W,H);ctx.restore();return true;}
+  if(fx==='mirror_h'){ctx.clearRect(0,0,W,H);ctx.drawImage(sc,0,0,W,H/2);ctx.save();ctx.translate(0,H);ctx.scale(1,-1);ctx.drawImage(sc,0,0,W,H/2);ctx.restore();return true;}
+  if(fx==='kaleidoscope'){const segs=Math.max(4,Math.round(s*12)+4),ang=(Math.PI*2)/segs;ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(cx,cy);for(let i=0;i<segs;i++){ctx.save();ctx.rotate(ang*i);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,Math.max(W,H),0,ang);ctx.closePath();ctx.clip();if(i%2===0){ctx.drawImage(sc,-cx,-cy,W,H);}else{ctx.scale(-1,1);ctx.rotate(-ang);ctx.drawImage(sc,-cx,-cy,W,H);}ctx.restore();}ctx.restore();return true;}
+  if(fx==='pixel'){const bs=Math.round(s*30)+4;ctx.clearRect(0,0,W,H);const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;tmp.getContext('2d').drawImage(sc,0,0,W,H);const tCtx=tmp.getContext('2d');for(let y=0;y<H;y+=bs)for(let x=0;x<W;x+=bs){const d=tCtx.getImageData(x+bs/2|0,y+bs/2|0,1,1).data;ctx.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;ctx.fillRect(x,y,bs,bs);}return true;}
+  if(fx==='glitch'){ctx.drawImage(sc,0,0,W,H);const n=Math.round(s*18)+3;for(let i=0;i<n;i++){const gy=Math.random()*H,gh=Math.random()*20+2,gx=(Math.random()-.5)*s*80;ctx.drawImage(sc,0,gy,W,gh,gx,gy,W,gh);}return true;}
+  if(fx==='mosaic'){const ts=Math.round(s*20)+8;ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=ts)for(let x=0;x<W;x+=ts){const ox=(Math.random()-.5)*s*40,oy=(Math.random()-.5)*s*40;ctx.drawImage(sc,x,y,ts,ts,x+ox,y+oy,ts,ts);}return true;}
+  if(fx==='tunnel'){const steps=Math.round(s*12)+4;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);for(let i=0;i<=steps;i++){const sc2=1-(i/steps)*0.9,ox=(W-(W*sc2))/2,oy=(H-(H*sc2))/2;ctx.drawImage(sc,0,0,W,H,ox,oy,W*sc2,H*sc2);}return true;}
+  if(fx==='oilpaint'||fx==='watercolor'||fx==='cartoon'||fx==='emboss'||fx==='stained') {
+    const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;
+    const tCtx=tmp.getContext('2d');tCtx.drawImage(sc,0,0,W,H);
+    const imgData=tCtx.getImageData(0,0,W,H);
+    const d=imgData.data, out=ctx.createImageData(W,H), od=out.data;
+    const r=Math.max(1,Math.round(s*4)+1); // rayon réduit pour fluidité
+
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+      const di=(y*W+x)*4;
+      const si=di; // position courante
+
+      if(fx==='oilpaint'){
+        // Histogramme sur intensité seulement (beaucoup plus rapide)
+        const bins=8, hist=new Array(bins).fill(0);
+        const sumR=new Array(bins).fill(0), sumG=new Array(bins).fill(0), sumB=new Array(bins).fill(0);
+        for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+          const nx=Math.min(W-1,Math.max(0,x+dx)),ny=Math.min(H-1,Math.max(0,y+dy));
+          const pi=(ny*W+nx)*4;
+          const lum=Math.round((d[pi]*.299+d[pi+1]*.587+d[pi+2]*.114)/255*(bins-1));
+          hist[lum]++;sumR[lum]+=d[pi];sumG[lum]+=d[pi+1];sumB[lum]+=d[pi+2];
+        }
+        let best=0,bi=0;
+        for(let i=0;i<bins;i++) if(hist[i]>best){best=hist[i];bi=i;}
+        od[di]=sumR[bi]/best;od[di+1]=sumG[bi]/best;od[di+2]=sumB[bi]/best;od[di+3]=255;
+
+      } else if(fx==='watercolor'){
+        // Flou + bruit
+        let rv=0,gv=0,bv=0,cnt=0;
+        for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+          const nx=Math.min(W-1,Math.max(0,x+dx)),ny=Math.min(H-1,Math.max(0,y+dy));
+          const pi=(ny*W+nx)*4;rv+=d[pi];gv+=d[pi+1];bv+=d[pi+2];cnt++;
+        }
+        rv=rv/cnt;gv=gv/cnt;bv=bv/cnt;
+        const jitter=(Math.random()-.5)*s*50;
+        od[di]=Math.min(255,Math.max(0,rv+jitter));
+        od[di+1]=Math.min(255,Math.max(0,gv+jitter*0.8));
+        od[di+2]=Math.min(255,Math.max(0,bv+jitter*0.6));
+        od[di+3]=255;
+
+      } else if(fx==='cartoon'){
+        // Quantification couleurs + contours
+        const q=Math.max(2,Math.round((1-s)*6)+2);
+        const rv=Math.round(d[si]/255*q)/q*255;
+        const gv=Math.round(d[si+1]/255*q)/q*255;
+        const bv=Math.round(d[si+2]/255*q)/q*255;
+        // Détection bords Sobel simplifié
+        const x1=Math.min(W-1,x+1),y1=Math.min(H-1,y+1),x0=Math.max(0,x-1),y0=Math.max(0,y-1);
+        const p00=d[(y0*W+x0)*4],p10=d[(y0*W+x)*4],p01=d[(y*W+x0)*4];
+        const p11=d[(y1*W+x1)*4];
+        const gx=Math.abs(d[si]-p01)+Math.abs(p11-p10);
+        const gy=Math.abs(d[si]-p10)+Math.abs(p11-p01);
+        const edge=(gx+gy)>60;
+        od[di]=edge?0:rv;od[di+1]=edge?0:gv;od[di+2]=edge?0:bv;od[di+3]=255;
+
+      } else if(fx==='emboss'){
+        const x2=Math.max(0,x-1),y2=Math.max(0,y-1);
+        const si2=(y2*W+x2)*4;
+        const diff=((d[si]-d[si2])+(d[si+1]-d[si2+1])+(d[si+2]-d[si2+2]))/3;
+        const v=Math.min(255,Math.max(0,128+diff*s*5));
+        od[di]=v;od[di+1]=v;od[di+2]=v;od[di+3]=255;
+
+      } else if(fx==='stained'){
+        const bsize=Math.max(4,Math.round((1-s)*40)+6);
+        const gx2=Math.min(W-1,Math.floor(x/bsize)*bsize+Math.floor(bsize/2));
+        const gy2=Math.min(H-1,Math.floor(y/bsize)*bsize+Math.floor(bsize/2));
+        const si2=(gy2*W+gx2)*4;
+        const bx=x%bsize,by=y%bsize,bw=2;
+        const isBorder=bx<bw||by<bw||bx>=bsize-bw||by>=bsize-bw;
+        if(isBorder){od[di]=15;od[di+1]=15;od[di+2]=25;od[di+3]=255;}
+        else{
+          od[di]=Math.min(255,d[si2]*1.6);
+          od[di+1]=Math.min(255,d[si2+1]*1.6);
+          od[di+2]=Math.min(255,d[si2+2]*1.6);
+          od[di+3]=255;
+        }
+      }
+    }
+    ctx.putImageData(out,0,0);
+    return true;
+  }
+  if(fx==='crystal'){const size=Math.round(s*40)+10;ctx.clearRect(0,0,W,H);for(let y=0;y<H;y+=size)for(let x=0;x<W;x+=size){const cx2=x+size/2,cy2=y+size/2;ctx.save();ctx.beginPath();if(Math.random()>.5){ctx.moveTo(x,y);ctx.lineTo(x+size,y);ctx.lineTo(cx2,cy2);}else{ctx.moveTo(x+size,y);ctx.lineTo(x+size,y+size);ctx.lineTo(cx2,cy2);}ctx.closePath();ctx.clip();ctx.drawImage(sc,0,0,W,H);ctx.restore();}return true;}
+  return false;
+}
+
+function applyCanvasFx(fx,s,t,cx,cy) { return applyCanvasFxTo(fx,s,t,cx,cy,srcC,dCtx,W,H); }
+
+// --- Warp pixel ---
+function warpXY(fx,x,y,s,t,cx,cy,W,H){
+  let sx=x,sy=y;
+  const nx=(x-cx)/cx,ny=(y-cy)/cy,r=Math.sqrt(nx*nx+ny*ny);
+  if(fx==='wave'){sx=x+Math.sin((y/H)*Math.PI*6+t*2)*s*50;sy=y+Math.sin((x/W)*Math.PI*6+t*2)*s*40;}
+  else if(fx==='lateral'){sx=x+Math.sin((y/H)*Math.PI*2)*s*cx*.85;}
+  else if(fx==='horizontal'){sy=y+Math.sin((x/W)*Math.PI*2)*s*cy*.85;}
+  else if(fx==='bulge'){const f=r<1?1/(1-r*r*s*.9+.01):1;sx=cx+nx*cx*f*(1-s*.5);sy=cy+ny*cy*f*(1-s*.5);}
+  else if(fx==='funnel'){const sc=Math.max(.05,1-s*(y/H)*.85);sx=cx+(x-cx)/sc;}
+  else if(fx==='swirl'){const a=r*s*Math.PI*2;sx=cx+(nx*Math.cos(a)-ny*Math.sin(a))*cx;sy=cy+(nx*Math.sin(a)+ny*Math.cos(a))*cy;}
+  else if(fx==='fisheye'){const th=Math.atan2(ny,nx),rn=r<1?Math.pow(r,1+s*1.5):r;sx=cx+Math.cos(th)*rn*cx;sy=cy+Math.sin(th)*rn*cy;}
+  else if(fx==='spiral'){const a2=r*s*Math.PI*3+t,pull=1-s*.5*r;sx=cx+(nx*Math.cos(a2)-ny*Math.sin(a2))*cx*pull;sy=cy+(nx*Math.sin(a2)+ny*Math.cos(a2))*cy*pull;}
+  else if(fx==='liquid'){sx=x+Math.sin(y*.05+t*1.5)*s*30+Math.sin(y*.12+t)*s*15;sy=y+Math.cos(x*.05+t*1.2)*s*30+Math.cos(x*.12+t*.8)*s*15;}
+  else if(fx==='shake'){sx=x+Math.sin(t*20+y*.1)*s*20+(Math.random()-.5)*s*8;sy=y+Math.cos(t*17+x*.1)*s*15+(Math.random()-.5)*s*8;}
+  else if(fx==='zoom_pulse'){const p=1+Math.sin(t*3)*s*.5;sx=cx+(x-cx)/p;sy=cy+(y-cy)/p;}
+  else if(fx==='vortex'){const pull=Math.max(0,1-r*s*1.2),a3=pull*Math.PI*2;sx=cx+(nx*Math.cos(a3)-ny*Math.sin(a3))*cx;sy=cy+(nx*Math.sin(a3)+ny*Math.cos(a3))*cy;}
+  else if(fx==='radial'){const w2=Math.sin(r*10-t*3)*s*20,th2=Math.atan2(ny,nx);sx=x+Math.cos(th2)*w2;sy=y+Math.sin(th2)*w2;}
+  else if(fx==='fun'){sx=x+Math.sin(y*.08+t)*s*40;sy=y+Math.cos(x*.08+t)*s*40*(y<H/2?1:-1);}
+  else if(fx==='zoom_region'){const zx=cx+Math.cos(t*.7)*cx*.4,zy=cy+Math.sin(t*.5)*cy*.4,zr=80+s*60,dx=x-zx,dy=y-zy,dr=Math.sqrt(dx*dx+dy*dy);if(dr<zr){const zm=1+s*2;sx=zx+dx/zm;sy=zy+dy/zm;}}
+  return[sx,sy];
+}
+
+// --- Color pixel ---
+function colorFxPx(fx,sd,dd,di,si,sx,sy,s,t,W){
+  if(fx==='thermal'){const b=(sd[si]*.299+sd[si+1]*.587+sd[si+2]*.114)/255;const[r,g,bv]=hslToRgb((1-b)*.67,1,.5);dd[di]=r;dd[di+1]=g;dd[di+2]=bv;dd[di+3]=255;}
+  else if(fx==='vintage'){const rv=sd[si]*.393+sd[si+1]*.769+sd[si+2]*.189,gv=sd[si]*.349+sd[si+1]*.686+sd[si+2]*.168,bv=sd[si]*.272+sd[si+1]*.534+sd[si+2]*.131,mx=1-s*.5;dd[di]=Math.min(255,rv*(1-mx)+sd[si]*mx);dd[di+1]=Math.min(255,gv*(1-mx)+sd[si+1]*mx);dd[di+2]=Math.min(255,bv*(1-mx)+sd[si+2]*mx);dd[di+3]=255;}
+  else if(fx==='neon'){const lum=(sd[si]+sd[si+1]+sd[si+2])/3,edge=(lum>80&&lum<200)?1:0;const[r,g,b]=hslToRgb((t*50%360)/360,1,.5);dd[di]=edge?r:sd[si]*.2;dd[di+1]=edge?g:sd[si+1]*.2;dd[di+2]=edge?b:sd[si+2]*.2;dd[di+3]=255;}
+  else if(fx==='psychedelic'){const[h,sat,l]=rgbToHsl(sd[si],sd[si+1],sd[si+2]);const[r,g,b]=hslToRgb((h+t*.1*s+.5)%1,Math.min(1,sat+s*.5),l);dd[di]=r;dd[di+1]=g;dd[di+2]=b;dd[di+3]=255;}
+  else if(fx==='negative'){const p=(Math.sin(t*3)+1)/2*s;dd[di]=sd[si]+(255-2*sd[si])*p;dd[di+1]=sd[si+1]+(255-2*sd[si+1])*p;dd[di+2]=sd[si+2]+(255-2*sd[si+2])*p;dd[di+3]=255;}
+  else if(fx==='prism'){const sh=Math.round(s*30),lx=Math.max(0,Math.min(W-1,sx-sh)),rx=Math.max(0,Math.min(W-1,sx+sh));dd[di]=sd[(sy*W+lx)*4];dd[di+1]=sd[si+1];dd[di+2]=sd[(sy*W+rx)*4+2];dd[di+3]=255;}
+  else if(fx==='halo'){const lum=(sd[si]+sd[si+1]+sd[si+2])/3,pulse=(Math.sin(t*3)+1)/2,glow=lum>120?Math.min(255,lum+s*100*pulse):lum*.3;const[r,g,b]=hslToRgb((t*30%360)/360,1,.5);dd[di]=Math.min(255,sd[si]+glow*r/255*s*150);dd[di+1]=Math.min(255,sd[si+1]+glow*g/255*s*150);dd[di+2]=Math.min(255,sd[si+2]+glow*b/255*s*150);dd[di+3]=255;}
+  else if(fx==='sepia'){const pulse=(Math.sin(t*2)+1)/2*s,rv=sd[si]*.393+sd[si+1]*.769+sd[si+2]*.189,gv=sd[si]*.349+sd[si+1]*.686+sd[si+2]*.168,bv=sd[si]*.272+sd[si+1]*.534+sd[si+2]*.131;dd[di]=Math.min(255,rv*pulse+sd[si]*(1-pulse));dd[di+1]=Math.min(255,gv*pulse+sd[si+1]*(1-pulse));dd[di+2]=Math.min(255,bv*pulse+sd[si+2]*(1-pulse));dd[di+3]=255;}
+  else{dd[di]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4];dd[di+1]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+1];dd[di+2]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+2];dd[di+3]=sd[(sy*W+Math.max(0,Math.min(W-1,sx)))*4+3];}
+}
+
+// --- Apply effect ---
+function applyEffect() {
+  const s=strength/100, t=(performance.now()/1000)*speedMult, cx=W/2, cy=H/2;
+  if (applyCanvasFx(currentFx,s,t,cx,cy)) return;
+  const dst=dCtx.createImageData(W,H); const dd=dst.data;
+  const sd=sCtx.getImageData(0,0,W,H).data;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+    let[sx,sy]=warpXY(currentFx,x,y,s,t,cx,cy,W,H);
+    sx=Math.max(0,Math.min(W-1,Math.round(sx))); sy=Math.max(0,Math.min(H-1,Math.round(sy)));
+    const di=(y*W+x)*4, si=(sy*W+sx)*4;
+    colorFxPx(currentFx,sd,dd,di,si,sx,sy,s,t,W);
+  }
+  dCtx.putImageData(dst,0,0);
+  dCtx.putImageData(dst,0,0);
+}
+
+// --- Demo ---
+(function(){
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const ctx=c.getContext('2d');
+  const grd=ctx.createRadialGradient(W/2,H/2,10,W/2,H/2,200);
+  grd.addColorStop(0,'#7F77DD'); grd.addColorStop(.5,'#1D9E75'); grd.addColorStop(1,'#D85A30');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.font='bold 80px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('😀',W/2-80,H/2); ctx.fillText('🎭',W/2+80,H/2-20);
+  ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='18px sans-serif';
+  ctx.fillText('Chargez votre image',W/2,H-28);
+  sCtx.drawImage(c,0,0); srcImg=c;
+  startLoop();
+})();
+</script>
+</body>
+</html>
