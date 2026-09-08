@@ -625,18 +625,19 @@ function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
       const si=di; // position courante
 
       if(fx==='oilpaint'){
-        // Histogramme sur intensité seulement (beaucoup plus rapide)
-        const bins=8, hist=new Array(bins).fill(0);
+        // Peinture à l'huile — histogramme avec plus de bins et rayon proportionnel
+        const bins=16, hr=Math.max(2,r);
+        const hist=new Array(bins).fill(0);
         const sumR=new Array(bins).fill(0), sumG=new Array(bins).fill(0), sumB=new Array(bins).fill(0);
-        for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+        for(let dy=-hr;dy<=hr;dy++) for(let dx=-hr;dx<=hr;dx++){
           const nx=Math.min(W-1,Math.max(0,x+dx)),ny=Math.min(H-1,Math.max(0,y+dy));
           const pi=(ny*W+nx)*4;
-          const lum=Math.round((d[pi]*.299+d[pi+1]*.587+d[pi+2]*.114)/255*(bins-1));
+          const lum=Math.min(bins-1,Math.round((d[pi]*.299+d[pi+1]*.587+d[pi+2]*.114)/255*(bins-1)));
           hist[lum]++;sumR[lum]+=d[pi];sumG[lum]+=d[pi+1];sumB[lum]+=d[pi+2];
         }
         let best=0,bi=0;
         for(let i=0;i<bins;i++) if(hist[i]>best){best=hist[i];bi=i;}
-        od[di]=sumR[bi]/best;od[di+1]=sumG[bi]/best;od[di+2]=sumB[bi]/best;od[di+3]=255;
+        od[di]=sumR[bi]/best|0;od[di+1]=sumG[bi]/best|0;od[di+2]=sumB[bi]/best|0;od[di+3]=255;
 
       } else if(fx==='watercolor'){
         // Flou + bruit
@@ -675,7 +676,8 @@ function applyCanvasFxTo(fx,s,t,cx,cy,sc,ctx,W,H) {
         od[di]=v;od[di+1]=v;od[di+2]=v;od[di+3]=255;
 
       } else if(fx==='stained'){
-        const bsize=Math.max(4,Math.round((1-s)*40)+6);
+        // Vitrail — intensité haute = gros carreaux
+        const bsize=Math.max(4,Math.round(s*44)+6);
         const gx2=Math.min(W-1,Math.floor(x/bsize)*bsize+Math.floor(bsize/2));
         const gy2=Math.min(H-1,Math.floor(y/bsize)*bsize+Math.floor(bsize/2));
         const si2=(gy2*W+gx2)*4;
